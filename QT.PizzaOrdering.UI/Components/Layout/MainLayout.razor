@@ -10,15 +10,20 @@
 <MudSnackbarProvider />
 
 <MudLayout>
-    <QTHeader DisplayNavMenuIcon="true" AppTitle="@AppName" OnMenuClick="@(_ => ToggleMenu())">
+    @* First focusable element on every page (WCAG 2.4.1). The click is handled here because <base href="/">
+       would turn a plain "#main-content" link into a navigation to "/#main-content". *@
+    <a href="#@MainContentId" class="skip-link" @onclick="SkipToMainContentAsync" @onclick:preventDefault="true">Skip to main content</a>
+    <QTHeader DisplayNavMenuIcon="true" AppTitle="@AppName" OnMenuClick="@(_ => ToggleMenu())" NavMenuOpen="@ControlBarOpen" NavMenuId="@NavigationDrawerId">
         <ContentSection>
             <MudBadge Content="@Cart.PizzaCount" Visible="@(Cart.PizzaCount > 0)" Color="Color.Primary" Overlap="true" Class="mx-2">
-                <MudIconButton Icon="@Icons.Material.Filled.ShoppingCart" Color="Color.Inherit" Size="Size.Medium" Href="/cart" aria-label="Cart" />
+                <MudIconButton Icon="@Icons.Material.Filled.ShoppingCart" Color="Color.Inherit" Size="Size.Medium" Href="/cart" aria-label="@CartLinkLabel" />
             </MudBadge>
-            <MudIconButton Color="Color.Inherit" Size="Size.Medium" OnClick="@DarkModeAsync" Icon="@(IsDarkMode ? Icons.Material.Filled.DarkMode : Icons.Material.Filled.LightMode)" aria-label="Toggle dark mode" />
+            <MudIconButton Color="Color.Inherit" Size="Size.Medium" OnClick="@DarkModeAsync" Icon="@(IsDarkMode ? Icons.Material.Filled.DarkMode : Icons.Material.Filled.LightMode)" aria-label="Toggle dark mode" aria-pressed="@(IsDarkMode ? "true" : "false")" />
         </ContentSection>
     </QTHeader>
-    <MudDrawer @bind-Open="@ControlBarOpen" ClipMode="DrawerClipMode.Always" Class="navigation-drawer" Variant="@DrawerVariant.Responsive" Elevation="0">
+    @* inert while closed: the closed drawer sits off screen, so its links must not take Tab focus
+       or be read out (WCAG 2.4.3, 2.4.7). Blazor leaves the attribute off when the value is false. *@
+    <MudDrawer @bind-Open="@ControlBarOpen" id="@NavigationDrawerId" inert="@(!ControlBarOpen)" ClipMode="DrawerClipMode.Always" Class="navigation-drawer" Variant="@DrawerVariant.Responsive" Elevation="0">
         <MudNavMenu Bordered="true">
             @foreach (NavMenuItem item in NavItems)
             {
@@ -27,7 +32,9 @@
         </MudNavMenu>
     </MudDrawer>
     <MudMainContent>
-        @Body
+        <main id="@MainContentId" tabindex="-1" @ref="_mainContent">
+            @Body
+        </main>
     </MudMainContent>
 </MudLayout>
 
@@ -35,8 +42,11 @@
     private const string AppName = "Neighborhood Pizza";
     private static LayoutProperties BaseLayoutProperties { get; } = new() { AppbarHeight = "56px", DrawerWidthLeft = "240px", DrawerWidthRight = "240px" };
 
+    private const string MainContentId = "main-content";
+    private const string NavigationDrawerId = "navigation-drawer";
     private static IReadOnlyList<NavMenuItem> NavItems => AppNavigation.Items;
 
+    private ElementReference _mainContent;
     private bool ControlBarOpen { get; set; } = false;
     private bool IsDarkMode { get; set; }
     [Inject] private ProtectedSessionStorage ProtectedSessionStorage { get; set; } = default!;
@@ -64,6 +74,16 @@
     {
         ControlBarOpen = !ControlBarOpen;
     }
+
+    /// <summary>The cart icon's name carries the count its badge shows, e.g. "Cart, 2 pizzas".</summary>
+    private string CartLinkLabel => Cart.PizzaCount switch
+    {
+        0 => "Cart",
+        1 => "Cart, 1 pizza",
+        int count => $"Cart, {count} pizzas"
+    };
+
+    private async Task SkipToMainContentAsync() => await _mainContent.FocusAsync();
 
     private async Task DarkModeAsync()
     {

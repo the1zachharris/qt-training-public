@@ -1,11 +1,17 @@
 <MudAppBar Class="app-bar" Fixed="true">
     @if (DisplayNavMenuIcon)
     {
-        <MudIconButton Icon="@Icons.Material.Filled.Menu" Size="Size.Large" Color="Color.Inherit" Edge="Edge.Start" OnClick="@OnMenuClick" Class="app-bar-menu-button" aria-label="Navigation menu" />
+        @* aria-expanded / aria-controls tell screen reader users whether the drawer is open (WCAG 4.1.2). *@
+        <MudIconButton Icon="@Icons.Material.Filled.Menu" Size="Size.Large" Color="Color.Inherit" Edge="Edge.Start" OnClick="@OnMenuClick" Class="app-bar-menu-button"
+                       aria-label="Navigation menu" aria-expanded="@(NavMenuOpen ? "true" : "false")" aria-controls="@NavMenuId" />
     }
-    <MudIcon Icon="@Icons.Material.Filled.LocalPizza" Color="Color.Primary" Size="Size.Large" Class="app-bar-logo cursor-pointer" @onclick="OnHeaderLogoClick" />
+    @* A real link, so the logo works from the keyboard as well as the mouse (WCAG 2.1.1). *@
+    <a href="/" class="app-bar-logo" aria-label="@HomeLinkLabel">
+        <MudIcon Icon="@Icons.Material.Filled.LocalPizza" Color="Color.Primary" Size="Size.Large" />
+    </a>
     <MudDivider Class="app-bar-divider mx-2 my-3" FlexItem="true" Vertical="true" />
-    <MudText Typo="Typo.h6" Class="app-bar-title">@AppTitle</MudText>
+    @* Same look as before, but not a heading: each page's own h1 is the first heading (WCAG 1.3.1). *@
+    <MudText Typo="Typo.h6" HtmlTag="p" Class="app-bar-title">@AppTitle</MudText>
     <MudSpacer />
     @ContentSection
 </MudAppBar>
@@ -23,11 +29,13 @@
     [Parameter]
     public bool DisplayNavMenuIcon { get; set; } = false;
 
-    [Inject]
-    public NavigationManager? NavigationManager { get; set; }
+    /// <summary>Whether the navigation drawer the menu button controls is open.</summary>
+    [Parameter]
+    public bool NavMenuOpen { get; set; }
 
-    private void OnHeaderLogoClick()
-    {
-        NavigationManager?.NavigateTo("/");
-    }
+    /// <summary>The id of the navigation drawer the menu button controls.</summary>
+    [Parameter]
+    public string? NavMenuId { get; set; }
+
+    private string HomeLinkLabel => string.IsNullOrWhiteSpace(AppTitle) ? "Home" : $"{AppTitle} home";
 }

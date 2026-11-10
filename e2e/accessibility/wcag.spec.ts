@@ -194,13 +194,18 @@ test.describe('2.1.1 Keyboard, 2.4.3 Focus Order', () => {
   test('the header logo is not a mouse-only control', async ({ page }, testInfo) => {
     await openMenu(page);
     const logo = await page.evaluate(() => {
-      const svg = document.querySelector('.mud-appbar .cursor-pointer') as HTMLElement | null;
-      if (!svg) return null;
-      return { tag: svg.tagName, tabindex: svg.getAttribute('tabindex'), role: svg.getAttribute('role'), label: svg.getAttribute('aria-label'), ariaHidden: svg.getAttribute('aria-hidden') };
+      // The logo was a clickable icon; it may now be a real link home. Check whichever is present.
+      const el = (document.querySelector('.mud-appbar .cursor-pointer') ?? document.querySelector('.mud-appbar a[href="/"]')) as HTMLElement | null;
+      if (!el) return null;
+      el.focus();
+      const focusable = document.activeElement === el;
+      el.blur();
+      return { tag: el.tagName, focusable, role: el.getAttribute('role'), label: el.getAttribute('aria-label'), ariaHidden: el.getAttribute('aria-hidden') };
     });
     record(testInfo, 'header logo', { logo });
-    // A clickable element must be reachable and named, or not clickable at all.
-    expect.soft(logo === null || (logo.tabindex !== null && !!logo.label), `logo: ${JSON.stringify(logo)}`).toBe(true);
+    // The pizza logo is clickable, so it must be found (as icon or link), focusable, and named.
+    expect(logo, 'header logo control').not.toBeNull();
+    expect.soft(logo!.focusable && !!logo!.label, `logo: ${JSON.stringify(logo)}`).toBe(true);
   });
 });
 
@@ -237,7 +242,10 @@ test.describe('2.4.7 Focus Visible, 2.4.11 Focus Not Obscured', () => {
         await openMenu(page);
         await setDarkMode(page, theme === 'dark');
         await p.go(page, request);
-        await page.mouse.move(640, (p.height ?? 800) - 2);
+        // Park the pointer on the fixed app bar's empty corner. A spot over the page content can end
+        // up hovering the focused control once the page scrolls, and MudBlazor's hover and focus
+        // styles match, which reads as "no visible focus" even though the indicator is there.
+        await page.mouse.move(0, 0);
         await page.evaluate(() => window.scrollTo(0, 0));
 
         const stops: { focus: string; visible: boolean; obscured: boolean }[] = [];
@@ -467,26 +475,28 @@ test.describe('4.1.2 Name, Role, Value; 1.3.1 Info and Relationships; 3.3 Input 
     expect.soft(dark, 'dark mode toggle exposes aria-pressed').toMatch(/true|false/);
   });
 
-  test('page structure: landmarks, skip link, and heading levels', async ({ page, request }, testInfo) => {
+  test('page structure: landmarks, skip link, and heading levels', async ({ browser, request }, testInfo) => {
     const out: Record<string, unknown> = {};
     for (const state of STATES.filter(s => ['menu', 'cart with pizzas', 'checkout', 'order confirmation', 'kitchen', 'order not found', 'page not found'].includes(s.name))) {
-      // A fresh tab per state: the cart lives in sessionStorage, so reusing one tab carried pizzas
-      // from one state into the next and broke addPreset's "(1)" count check.
-      const tab = await page.context().newPage();
-      await openMenu(tab);
-      await state.go(tab, request);
-      out[state.name] = await tab.evaluate(() => ({
+      // A fresh browser context per state: the cart lives in session storage, so reusing one page
+      // carries pizzas from one state into the next and addPreset's "(1)" count never matches.
+      const context = await browser.newContext();
+      const page = await context.newPage();
+      await openMenu(page);
+      await state.go(page, request);
+      out[state.name] = await page.evaluate(() => ({
         main: document.querySelectorAll('main, [role=main]').length,
         nav: document.querySelectorAll('nav, [role=navigation]').length,
         banner: document.querySelectorAll('header, [role=banner]').length,
         skipLink: !!Array.from(document.querySelectorAll('a[href^="#"]')).find(a => /skip|main/i.test(a.textContent ?? '')),
         headings: Array.from(document.querySelectorAll('h1,h2,h3,h4,h5,h6')).filter(h => (h as HTMLElement).offsetParent !== null).map(h => `${h.tagName} ${h.textContent?.trim().slice(0, 40)}`),
       }));
-      await tab.close();
+      await context.close();
     }
     record(testInfo, 'page structure', out);
     for (const [name, s] of Object.entries(out) as [string, any][]) {
       expect.soft(s.main, `${name}: one main landmark`).toBe(1);
+      expect.soft(s.skipLink, `${name}: skip link to the main content`).toBe(true);
       expect.soft(s.headings.filter((h: string) => h.startsWith('H1')).length, `${name}: one h1`).toBe(1);
     }
   });
