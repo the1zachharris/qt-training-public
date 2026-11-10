@@ -5,7 +5,7 @@
 <MudContainer MaxWidth="MaxWidth.Large" Class="my-4">
     <MudPaper Class="page-shell">
         <MudStack Row AlignItems="AlignItems.Center" Spacing="2" Class="mb-3">
-            <MudText Typo="Typo.h5" Style="font-weight: bold;">Your Order</MudText>
+            <MudText Typo="Typo.h5" HtmlTag="h1" Class="page-title">Your Order</MudText>
             <MudSpacer />
             @if (!Loading && !Cart.IsEmpty)
             {
@@ -27,12 +27,12 @@
         }
         else
         {
-            <MudSimpleTable Elevation="0" Outlined>
+            <MudSimpleTable Elevation="0" Outlined Class="cart-table">
                 <thead>
                     <tr>
                         <th>Pizza</th>
                         <th>Quantity</th>
-                        <th class="money">Each</th>
+                        <th class="money cart-each">Each</th>
                         <th class="money">Price</th>
                         <th></th>
                     </tr>
@@ -49,9 +49,16 @@
                                     <MudIconButton Icon="@Icons.Material.Filled.Add" Size="Size.Small" Disabled="@(item.Pizza.Quantity >= PizzaPricer.MaxQuantity)" OnClick="@(() => Cart.SetQuantityAsync(item.Id, item.Pizza.Quantity + 1))" aria-label="One more" />
                                 </MudStack>
                             </td>
-                            <td class="money">@item.Pizza.UnitPrice.ToCurrency()</td>
-                            <td class="money">@item.Pizza.LineTotal.ToCurrency()</td>
+                            <td class="money cart-each">@item.Pizza.UnitPrice.ToCurrency()</td>
                             <td class="money">
+                                @item.Pizza.LineTotal.ToCurrency()
+                                @if (item.Pizza.Quantity > 1)
+                                {
+                                    @* The Each column is hidden on a phone, so the unit price moves under the line price. *@
+                                    <div class="cart-each-narrow mud-text-secondary">@($"{item.Pizza.UnitPrice.ToCurrency()} each")</div>
+                                }
+                            </td>
+                            <td class="money cart-actions">
                                 <MudTooltip Text="Change this pizza">
                                     <MudIconButton Icon="@Icons.Material.Filled.Edit" Size="Size.Small" OnClick="@(() => EditAsync(item))" aria-label="Change this pizza" />
                                 </MudTooltip>

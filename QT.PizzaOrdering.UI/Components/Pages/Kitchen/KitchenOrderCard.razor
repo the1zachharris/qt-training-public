@@ -1,12 +1,12 @@
 <MudCard Outlined Elevation="0" Class="@($"kitchen-card{(IsReady ? " kitchen-card-ready" : string.Empty)}")">
     <MudCardContent>
         <MudStack Row AlignItems="AlignItems.Start" Spacing="3">
-            <MudStack Spacing="0">
+            <MudStack Spacing="0" Class="kitchen-card-who">
                 <MudText Typo="Typo.h5" Style="font-weight: bold;">@PizzaText.OrderNumber(Order.OrderNumber)</MudText>
-                <MudText Typo="Typo.subtitle1">@Order.CustomerName</MudText>
+                <MudText Typo="Typo.subtitle1" Class="customer-name">@Order.CustomerName</MudText>
             </MudStack>
             <MudSpacer />
-            <MudStack Spacing="0" AlignItems="AlignItems.End">
+            <MudStack Spacing="0" AlignItems="AlignItems.End" Class="kitchen-card-status">
                 <MudChip T="string" Size="Size.Small" Color="@(IsReady ? Color.Success : Color.Primary)" Variant="Variant.Filled">@Order.Status</MudChip>
                 <MudText Typo="Typo.caption" Class="mud-text-secondary">@TimeText</MudText>
             </MudStack>

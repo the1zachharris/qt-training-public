@@ -79,6 +79,9 @@ test.describe('When the API is down', () => {
     const alert = page.getByText('The menu could not be loaded.', { exact: false });
     await expect(alert).toBeVisible({ timeout: 30_000 });
     info.annotations.push({ type: 'observation', description: `menu message: "${(await alert.textContent())?.trim()}"` });
+    // Customers get plain wording; the host, port, and socket error belong in the log.
+    await expect(alert).not.toContainText(`${API_PORT}`);
+    await expect(alert).not.toContainText(/localhost|refused|socket/i);
     await page.screenshot({ path: info.outputPath('menu-api-down.png'), fullPage: true });
   });
 

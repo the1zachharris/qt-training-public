@@ -5,7 +5,7 @@
 <MudContainer MaxWidth="MaxWidth.Medium" Class="my-4">
     <MudPaper Class="page-shell">
         <MudStack Row AlignItems="AlignItems.Center" Spacing="2" Class="mb-3">
-            <MudText Typo="Typo.h5" Style="font-weight: bold;">Place Your Order</MudText>
+            <MudText Typo="Typo.h5" HtmlTag="h1" Class="page-title">Place Your Order</MudText>
         </MudStack>
         <StatusAlert Status="@Status" Class="mb-3" />
         @if (Loading)
@@ -39,7 +39,8 @@
             <MudTextField T="string" @bind-Value="CustomerName" Label="Name for the order" Required Immediate
                           Variant="Variant.Outlined" Margin="Margin.Dense" MaxLength="100" Class="mt-6"
                           HelperText="We will call this name when your order is ready."
-                          Error="@(NameError is not null)" ErrorText="@NameError" />
+                          Error="@(NameError is not null)" ErrorText="@NameError"
+                          OnKeyDown="@OnNameKeyDownAsync" />
 
             <MudAlert Severity="Severity.Info" Dense Variant="Variant.Outlined" Class="mt-4">
                 Pickup only. Pay at the counter when you arrive.

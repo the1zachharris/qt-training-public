@@ -1,0 +1,14 @@
+@page "/not-found"
+@layout Layout.MainLayout
+
+<PageTitle>Page Not Found - Neighborhood Pizza</PageTitle>
+
+@* Shown for any address the app does not know, including a mistyped or cut-off order link.
+   Program.cs re-runs unknown addresses here, and Routes.razor names this page as the router's
+   NotFoundPage, so the customer sees this inside the app instead of the browser's own error. *@
+<MudContainer MaxWidth="MaxWidth.Large" Class="my-4">
+    <MudPaper Class="page-shell">
+        <MudText Typo="Typo.h5" HtmlTag="h1" Class="page-title mb-3">Page Not Found</MudText>
+        <MudAlert Severity="Severity.Warning">That page does not exist. <MudLink Href="/">Back to the menu</MudLink></MudAlert>
+    </MudPaper>
+</MudContainer>

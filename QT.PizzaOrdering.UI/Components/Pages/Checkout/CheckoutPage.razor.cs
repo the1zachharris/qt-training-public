@@ -1,3 +1,5 @@
+using Microsoft.AspNetCore.Components.Web;
+
 using QT.PizzaOrdering.Core.Features.Orders.Requests;
 using QT.PizzaOrdering.Core.Features.Orders.Responses;
 using QT.PizzaOrdering.Core.Shared;
@@ -32,6 +34,17 @@ public partial class CheckoutPage
         Loading = false;
     }
 
+    /// <summary>
+    /// Enter in the name field places the order, the same as clicking Place Order. The name's
+    /// latest keystroke reaches the server before this key does, so the name is already up to date.
+    /// </summary>
+    private Task OnNameKeyDownAsync(KeyboardEventArgs e) =>
+        e.Key is "Enter" or "NumpadEnter" && !e.Repeat ? PlaceOrderAsync() : Task.CompletedTask;
+
+    /// <summary>
+    /// Runs at most once at a time: <see cref="Submitting"/> is set before the first await, so a
+    /// double-click or Enter pressed during a click sees it and does nothing.
+    /// </summary>
     private async Task PlaceOrderAsync()
     {
         if (!CanPlaceOrder)

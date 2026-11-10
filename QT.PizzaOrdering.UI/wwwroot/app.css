@@ -60,3 +60,92 @@ h1:focus {
     .kitchen-card.kitchen-card-ready {
         border-left-color: var(--mud-palette-success);
     }
+
+/* Each page's main heading. It is an h1 so FocusOnNavigate (Routes.razor) and screen readers can
+   find it, styled like the h5 it used to be. */
+.page-title {
+    font-weight: bold;
+}
+
+/* Customer names are typed by customers and can be one long word; let them wrap anywhere so they
+   never push a card or page wider than the screen. */
+.customer-name {
+    overflow-wrap: anywhere;
+}
+
+/* App bar pieces, given room on wide screens and squeezed on a phone. */
+.app-bar-menu-button {
+    padding-left: 16px;
+    padding-right: 16px;
+}
+
+.app-bar-logo {
+    margin-left: 16px;
+    flex-shrink: 0;
+}
+
+.app-bar-title {
+    min-width: 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.cart-each-narrow {
+    display: none;
+    font-size: 0.75rem;
+}
+
+/* Phones (MudBlazor's xs breakpoint). */
+@media (max-width: 599.98px) {
+    .page-shell {
+        padding: 8px;
+    }
+
+    .app-bar-menu-button {
+        padding-left: 8px;
+        padding-right: 8px;
+    }
+
+    .app-bar-logo {
+        margin-left: 0;
+    }
+
+    .app-bar-divider {
+        display: none;
+    }
+
+    .app-bar-title {
+        font-size: 1.05rem;
+        margin-left: 8px;
+    }
+
+    /* The cart table keeps every column a customer needs on screen: tighter cells, and the
+       unit price moves under the line price instead of having its own column. */
+    .cart-table.mud-simple-table table * tr > td,
+    .cart-table.mud-simple-table table * tr > th {
+        padding: 6px 4px;
+    }
+
+    .cart-table .cart-each {
+        display: none;
+    }
+
+    .cart-each-narrow {
+        display: block;
+    }
+
+    .cart-actions {
+        white-space: nowrap;
+    }
+}
+
+/* The status chip and time keep their place on the card however long the customer's name is. */
+.kitchen-card-who {
+    min-width: 0;
+}
+
+.kitchen-card-status {
+    flex-shrink: 0;
+    white-space: nowrap;
+}

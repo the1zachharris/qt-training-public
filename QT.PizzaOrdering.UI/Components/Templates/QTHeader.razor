@@ -1,11 +1,11 @@
 <MudAppBar Class="app-bar" Fixed="true">
     @if (DisplayNavMenuIcon)
     {
-        <MudIconButton Icon="@Icons.Material.Filled.Menu" Size="Size.Large" Color="Color.Inherit" Edge="Edge.Start" OnClick="@OnMenuClick" Class="pl-4 pr-4" aria-label="Navigation menu" />
+        <MudIconButton Icon="@Icons.Material.Filled.Menu" Size="Size.Large" Color="Color.Inherit" Edge="Edge.Start" OnClick="@OnMenuClick" Class="app-bar-menu-button" aria-label="Navigation menu" />
     }
-    <MudIcon Icon="@Icons.Material.Filled.LocalPizza" Color="Color.Primary" Size="Size.Large" Class="ml-4 cursor-pointer" @onclick="OnHeaderLogoClick" />
-    <MudDivider Class="mx-2 my-3 ma-4" FlexItem="true" Vertical="true" />
-    <MudText Typo="Typo.h6">@AppTitle</MudText>
+    <MudIcon Icon="@Icons.Material.Filled.LocalPizza" Color="Color.Primary" Size="Size.Large" Class="app-bar-logo cursor-pointer" @onclick="OnHeaderLogoClick" />
+    <MudDivider Class="app-bar-divider mx-2 my-3" FlexItem="true" Vertical="true" />
+    <MudText Typo="Typo.h6" Class="app-bar-title">@AppTitle</MudText>
     <MudSpacer />
     @ContentSection
 </MudAppBar>

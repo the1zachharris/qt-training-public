@@ -44,6 +44,7 @@ try
     builder.Services.AddScoped<ProtectedSessionStorage>();
     builder.Services.AddScoped<ICartStorage, ProtectedSessionCartStorage>();
     builder.Services.AddScoped<CartState>();
+    builder.Services.AddOptions<OrderStatusConfig>().Bind(builder.Configuration.GetSection(OrderStatusConfig.SectionName)).ValidateDataAnnotations().ValidateOnStart();
     builder.Services.AddOptions<KitchenConfig>().Bind(builder.Configuration.GetSection(KitchenConfig.SectionName)).ValidateDataAnnotations().ValidateOnStart();
     builder.Services.AddHttpClient<IPizzaOrderingHttpClient, PizzaOrderingHttpClient>(client =>
     {
@@ -60,6 +61,10 @@ try
         // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
         app.UseHsts();
     }
+    // Unknown addresses (a typo, or a cut-off order link) would otherwise get an empty 404 that the
+    // browser shows as its own error page. Re-running them as /not-found keeps the 404 status but
+    // serves the app, whose router then shows the Not Found page.
+    app.UseStatusCodePagesWithReExecute("/not-found", createScopeForStatusCodePages: true);
     app.UseHttpsRedirection();
     app.UseStaticFiles();
     app.UseAntiforgery();

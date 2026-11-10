@@ -16,6 +16,12 @@ public partial class MenuPage : IDisposable
     [Inject] private IDialogService DialogService { get; set; } = default!;
     [Inject] private ISnackbar Snackbar { get; set; } = default!;
 
+    /// <summary>
+    /// The "added to your order" toast now on screen. Each new add replaces it, so a run of quick
+    /// adds never builds a queue that holds back a later message, such as the order-full warning.
+    /// </summary>
+    private Snackbar? _addedToast;
+
     private MenuCatalog? Menu { get; set; }
     private bool Loading { get; set; } = true;
     private StatusMessage? Status { get; set; }
@@ -35,7 +41,7 @@ public partial class MenuPage : IDisposable
 
         ClientResult<MenuCatalog> result = await Client.GetMenuAsync();
         if (result.IsFailure)
-            Status = StatusMessage.Error($"The menu could not be loaded. {result.Error?.Message}");
+            Status = StatusMessage.Error(CustomerMessages.MenuUnavailable);
         else if (!PizzaSelections.CanOrderFrom(result.Data!))
             Status = StatusMessage.Warning("The menu is empty right now. Please check back soon.");
         else
@@ -64,6 +70,7 @@ public partial class MenuPage : IDisposable
 
         if (Cart.IsFull)
         {
+            DismissAddedToast();
             Snackbar.Add($"Your order already has {OrderPricer.MaxPizzaLines} different pizzas. Remove one to add another.", Severity.Warning);
             return;
         }
@@ -76,7 +83,15 @@ public partial class MenuPage : IDisposable
         }
 
         await Cart.AddAsync(selection, priced.Value);
-        Snackbar.Add($"{priced.Value.Quantity} × {priced.Value.Name} added to your order.", Severity.Success);
+        DismissAddedToast();
+        _addedToast = Snackbar.Add($"{priced.Value.Quantity} × {priced.Value.Name} added to your order.", Severity.Success);
+    }
+
+    private void DismissAddedToast()
+    {
+        if (_addedToast is not null)
+            Snackbar.Remove(_addedToast);
+        _addedToast = null;
     }
 
     private void OnCartChanged() => InvokeAsync(StateHasChanged);

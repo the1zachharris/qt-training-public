@@ -36,7 +36,7 @@ public partial class CartPage : IDisposable
             ClientResult<MenuCatalog> menu = await Client.GetMenuAsync();
             if (menu.IsFailure)
             {
-                Status = StatusMessage.Error($"The menu could not be loaded, so this pizza cannot be changed right now. {menu.Error?.Message}");
+                Status = StatusMessage.Error($"The menu could not be loaded, so this pizza cannot be changed right now. {CustomerMessages.TryAgainSoon}");
                 return;
             }
             Menu = menu.Data!;

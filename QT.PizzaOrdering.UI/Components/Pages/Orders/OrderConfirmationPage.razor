@@ -1,4 +1,7 @@
 @page "/orders/{OrderId:guid}"
+@using Microsoft.Extensions.Options
+@using QT.PizzaOrdering.UI.Shared.Configs
+@implements IDisposable
 
 <PageTitle>Order Confirmation - Neighborhood Pizza</PageTitle>
 
@@ -14,7 +17,7 @@
             <MudStack Row AlignItems="AlignItems.Center" Spacing="3" Class="mb-4">
                 <MudIcon Icon="@Icons.Material.Filled.CheckCircle" Color="Color.Success" Size="Size.Large" />
                 <MudStack Spacing="0">
-                    <MudText Typo="Typo.h5" Style="font-weight: bold;">@($"Thanks, {Order.CustomerName}! Your order is in.")</MudText>
+                    <MudText Typo="Typo.h5" HtmlTag="h1" Class="page-title customer-name">@($"Thanks, {Order.CustomerName}! Your order is in.")</MudText>
                     <MudText Typo="Typo.h6">@($"Order {PizzaText.OrderNumber(Order.OrderNumber)}")</MudText>
                 </MudStack>
             </MudStack>
@@ -55,6 +58,9 @@
 @code {
     [Parameter] public Guid OrderId { get; set; }
     [Inject] private IPizzaOrderingHttpClient Client { get; set; } = default!;
+    [Inject] private IOptions<OrderStatusConfig> StatusOptions { get; set; } = default!;
+
+    private CancellationTokenSource? _watching;
 
     private OrderDetails? Order { get; set; }
     private bool Loading { get; set; } = true;
@@ -62,6 +68,7 @@
 
     protected override async Task OnParametersSetAsync()
     {
+        StopWatching();
         Loading = true;
         Status = null;
 
@@ -71,9 +78,52 @@
         {
             Status = result.Error?.Status == System.Net.HttpStatusCode.NotFound
                 ? StatusMessage.Warning("We could not find that order.")
-                : StatusMessage.Error($"The order could not be loaded. {result.Error?.Message}");
+                : StatusMessage.Error($"The order could not be loaded. {CustomerMessages.TryAgainSoon}");
         }
 
         Loading = false;
+
+        if (Order is { Status: not OrderStatus.Ready })
+        {
+            _watching = new CancellationTokenSource();
+            _ = WatchForReadyAsync(Order.Id, _watching.Token);
+        }
     }
+
+    /// <summary>
+    /// Checks the order again on a timer until the kitchen marks it Ready, so a customer waiting
+    /// on this page sees "ready for pickup" without reloading. A failed check is skipped quietly:
+    /// the page still shows the last status it knew, and the next check tries again.
+    /// </summary>
+    private async Task WatchForReadyAsync(Guid orderId, CancellationToken ct)
+    {
+        using PeriodicTimer timer = new(TimeSpan.FromSeconds(StatusOptions.Value.RefreshSeconds));
+        try
+        {
+            while (await timer.WaitForNextTickAsync(ct))
+            {
+                ClientResult<OrderDetails> result = await Client.GetOrderAsync(orderId, ct);
+                if (ct.IsCancellationRequested || result.IsFailure)
+                    continue;
+
+                Order = result.Data;
+                await InvokeAsync(StateHasChanged);
+                if (Order?.Status == OrderStatus.Ready)
+                    return;
+            }
+        }
+        catch (Exception ex) when (ex is OperationCanceledException or ObjectDisposedException)
+        {
+            // The customer left the page or opened a different order; stop checking.
+        }
+    }
+
+    private void StopWatching()
+    {
+        _watching?.Cancel();
+        _watching?.Dispose();
+        _watching = null;
+    }
+
+    public void Dispose() => StopWatching();
 }
