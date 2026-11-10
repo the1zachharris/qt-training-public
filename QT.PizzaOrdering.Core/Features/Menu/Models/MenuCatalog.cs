@@ -1,5 +1,3 @@
-using QT.PizzaOrdering.Core.Features.Menu.Enums;
-
 namespace QT.PizzaOrdering.Core.Features.Menu.Models;
 
 /// <summary>
@@ -8,31 +6,21 @@ namespace QT.PizzaOrdering.Core.Features.Menu.Models;
 /// </summary>
 public sealed record MenuCatalog(
     IReadOnlyList<PizzaSize> Sizes,
-    IReadOnlyList<Crust> Crusts,
-    IReadOnlyList<Sauce> Sauces,
     IReadOnlyList<Topping> Toppings,
     IReadOnlyList<PresetPizza> PresetPizzas);
 
 /// <summary>
-/// A pizza size. The size sets both the base price and what each topping costs on that size.
+/// A pizza size and the price of a plain cheese pizza in that size.
 /// </summary>
-public sealed record PizzaSize(int Id, string Name, int Inches, decimal BasePrice, decimal ToppingPrice);
-
-public sealed record Crust(int Id, string Name, decimal Upcharge);
-
-public sealed record Sauce(int Id, string Name);
-
-public sealed record Topping(int Id, string Name, ToppingCategory Category);
+public sealed record PizzaSize(int Id, string Name, int Inches, decimal Price);
 
 /// <summary>
-/// A ready-made pizza on the menu. A preset has no price of its own: it is priced from its
-/// crust and toppings exactly like a custom pizza, so customizing one never changes the rules.
+/// A topping and what it adds to one pizza. The price is the same on every size.
 /// </summary>
-public sealed record PresetPizza(
-    int Id,
-    string Name,
-    string Description,
-    int CrustId,
-    int SauceId,
-    CheeseLevel Cheese,
-    List<int> ToppingIds);
+public sealed record Topping(int Id, string Name, decimal Price);
+
+/// <summary>
+/// A named combination of toppings offered as a shortcut. A preset has no price of its own: it
+/// is priced from its toppings exactly like a pizza built from scratch.
+/// </summary>
+public sealed record PresetPizza(int Id, string Name, string Description, List<int> ToppingIds);

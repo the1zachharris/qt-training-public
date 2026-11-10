@@ -1,4 +1,3 @@
-using QT.PizzaOrdering.Core.Features.Menu.Enums;
 using QT.PizzaOrdering.Core.Features.Orders.Responses;
 
 namespace QT.PizzaOrdering.Core.Features.Orders.Models;
@@ -15,9 +14,6 @@ public sealed class OrderLine
     public Guid OrderId { get; private set; }
     public string Name { get; private set; } = string.Empty;
     public string Size { get; private set; } = string.Empty;
-    public string Crust { get; private set; } = string.Empty;
-    public string Sauce { get; private set; } = string.Empty;
-    public CheeseLevel Cheese { get; private set; }
     public List<string> Toppings { get; private set; } = [];
     public int Quantity { get; private set; }
     public decimal UnitPrice { get; private set; }
@@ -27,9 +23,6 @@ public sealed class OrderLine
     {
         Name = pizza.Name,
         Size = pizza.Size,
-        Crust = pizza.Crust,
-        Sauce = pizza.Sauce,
-        Cheese = pizza.Cheese,
         Toppings = [.. pizza.Toppings],
         Quantity = pizza.Quantity,
         UnitPrice = pizza.UnitPrice,
@@ -37,5 +30,5 @@ public sealed class OrderLine
     };
 
     public PricedPizza ToPricedPizza() =>
-        new(Name, Size, Crust, Sauce, Cheese, [.. Toppings], Quantity, UnitPrice, LineTotal);
+        new(Name, Size, [.. Toppings], Quantity, UnitPrice, LineTotal);
 }

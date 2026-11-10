@@ -23,10 +23,10 @@ public sealed partial class GetOrderHandler
     }
 
     /// <returns>
-    /// Ok with the order confirmation when found.
+    /// Ok with the order when found.
     /// ProblemHttpResult (404 Not Found) when no order has that id.
     /// </returns>
-    public async Task<Results<Ok<OrderConfirmation>, ProblemHttpResult>> GetOrderAsync(
+    public async Task<Results<Ok<OrderDetails>, ProblemHttpResult>> GetOrderAsync(
         Guid orderId,
         CancellationToken ct = default)
     {
@@ -41,7 +41,7 @@ public sealed partial class GetOrderHandler
                 detail: notFound.Message);
         }
 
-        return TypedResults.Ok(OrderConfirmation.From(order));
+        return TypedResults.Ok(OrderDetails.From(order));
     }
 
     [LoggerMessage(Level = LogLevel.Information,

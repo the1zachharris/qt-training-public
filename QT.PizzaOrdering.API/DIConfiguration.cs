@@ -45,9 +45,6 @@ public static class DIConfiguration
     {
         builder.Services.AddScoped<IOrderRepository, OrderRepository>();
 
-        builder.Services.AddScoped<QuoteOrderHandler>();
-        builder.Services.AddScoped<IValidator<QuoteOrderRequest>, QuoteOrderRequestValidator>();
-
         builder.Services.AddScoped<PlaceOrderHandler>();
         builder.Services.AddScoped<IValidator<PlaceOrderRequest>, PlaceOrderRequestValidator>();
 

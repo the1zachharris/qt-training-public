@@ -1,6 +1,4 @@
 using QT.PizzaOrdering.Core.Features.Menu.Models;
-using QT.PizzaOrdering.Core.Features.Orders.Enums;
-using QT.PizzaOrdering.Core.Features.Orders.Models;
 using QT.PizzaOrdering.Core.Features.Orders.Requests;
 using QT.PizzaOrdering.Core.Features.Orders.Responses;
 using QT.PizzaOrdering.Core.Shared;
@@ -8,17 +6,14 @@ using QT.PizzaOrdering.Core.Shared;
 namespace QT.PizzaOrdering.Core.Features.Orders;
 
 /// <summary>
-/// Prices a whole order: every pizza, then tax and the delivery fee.
+/// Prices every pizza on an order. The order total is simply the sum of the lines: there is no
+/// tax and there are no fees.
 /// </summary>
 public static class OrderPricer
 {
     public const int MaxPizzaLines = 20;
 
-    public static Result<OrderQuote> Quote(
-        MenuCatalog menu,
-        IReadOnlyList<PizzaSelection> pizzas,
-        FulfillmentType fulfillment,
-        OrderPricingRules rules)
+    public static Result<IReadOnlyList<PricedPizza>> Price(MenuCatalog menu, IReadOnlyList<PizzaSelection> pizzas)
     {
         Dictionary<string, string[]> failures = [];
         List<PricedPizza> priced = new(pizzas.Count);
@@ -37,13 +32,8 @@ public static class OrderPricer
             }
         }
 
-        if (failures.Count > 0)
-            return Error.Validation.Of(failures);
-
-        decimal subtotal = priced.Sum(pizza => pizza.LineTotal);
-        decimal tax = Math.Round(subtotal * rules.TaxRate, 2, MidpointRounding.AwayFromZero);
-        decimal deliveryFee = fulfillment == FulfillmentType.Delivery ? rules.DeliveryFee : 0m;
-
-        return new OrderQuote(priced, subtotal, tax, deliveryFee, subtotal + tax + deliveryFee);
+        return failures.Count > 0
+            ? Error.Validation.Of(failures)
+            : priced;
     }
 }

@@ -11,58 +11,88 @@ namespace QT.PizzaOrdering.Test.Core;
 
 public class OrderTests
 {
-    private static readonly DateTimeOffset Now = new(2026, 11, 10, 18, 30, 0, TimeSpan.Zero);
-    private readonly FakeTimeProvider _timeProvider = new(Now);
+    private static readonly DateTimeOffset PlacedTime = new(2026, 11, 10, 18, 30, 0, TimeSpan.Zero);
+    private static readonly DateTimeOffset ReadyTime = PlacedTime.AddMinutes(20);
 
-    private static OrderQuote QuoteFor(PlaceOrderRequest request) =>
-        OrderPricer.Quote(MenuSeed.Create(), request.Pizzas, request.Fulfillment, new OrderPricingRules(0.085m, 3.99m)).Value;
+    private static IReadOnlyList<PricedPizza> PriceOf(PlaceOrderRequest request) =>
+        OrderPricer.Price(MenuSeed.Create(), request.Pizzas).Value;
+
+    private static Order PlaceOrder(PlaceOrderRequest request) =>
+        Order.Place(new FakeTimeProvider(PlacedTime), request, PriceOf(request));
 
     [Fact]
-    public void Place_WhenValid_CopiesTheQuoteOntoTheOrder()
+    public void Place_StartsAsNew_WithTheSumOfThePizzasAsTheTotal()
     {
-        PlaceOrderRequest request = Pizzas.DeliveryOrder(Pizzas.MediumPepperoni(2));
-        OrderQuote quote = QuoteFor(request);
+        // Small + 1 topping (12.00) and Large + 4 toppings (22.00)
+        PlaceOrderRequest request = Pizzas.Order(
+            Pizzas.Custom(Pizzas.Small, toppingIds: [Pizzas.Pepperoni]),
+            Pizzas.Custom(Pizzas.Large, toppingIds: Pizzas.AllToppings));
 
-        Order order = Order.Place(_timeProvider, request, quote);
+        Order order = PlaceOrder(request);
 
         Assert.NotEqual(Guid.Empty, order.Id);
-        Assert.StartsWith("PZ-", order.OrderNumber);
-        Assert.Equal(Now, order.PlacedAt);
-        Assert.Equal(quote.Total, order.Total);
-        OrderLine line = Assert.Single(order.Lines);
-        Assert.Equal("Pepperoni", line.Name);
-        Assert.Equal(2, line.Quantity);
-        Assert.Equal(28.98m, line.LineTotal);
+        Assert.Equal(OrderStatus.New, order.Status);
+        Assert.Null(order.ReadyAt);
+        Assert.Equal(PlacedTime, order.PlacedAt);
+        Assert.Equal(34.00m, order.Total);
+        Assert.Equal(2, order.Lines.Count);
+        Assert.Equal(["Pepperoni"], order.Lines[0].Toppings);
     }
 
     [Fact]
-    public void Place_WhenPickup_DropsAnyDeliveryAddress()
+    public void Place_TrimsTheCustomerName()
     {
-        PlaceOrderRequest request = Pizzas.PickupOrder(Pizzas.MediumPepperoni()) with { DeliveryAddress = "100 Example St" };
-
-        Order order = Order.Place(_timeProvider, request, QuoteFor(request));
-
-        Assert.Equal(FulfillmentType.Pickup, order.Fulfillment);
-        Assert.Null(order.DeliveryAddress);
-    }
-
-    [Fact]
-    public void Place_WhenTextHasPadding_TrimsItAndStoresBlankNotesAsNull()
-    {
-        PlaceOrderRequest request = Pizzas.PickupOrder(Pizzas.MediumPepperoni()) with { CustomerName = "  Pat Sample ", Notes = "   " };
-
-        Order order = Order.Place(_timeProvider, request, QuoteFor(request));
+        Order order = PlaceOrder(Pizzas.Order(Pizzas.Custom()) with { CustomerName = "  Pat Sample " });
 
         Assert.Equal("Pat Sample", order.CustomerName);
-        Assert.Null(order.Notes);
     }
 
     [Fact]
-    public void Place_WhenQuoteHasNoPizzas_Throws()
+    public void Place_WithNoPizzas_Throws()
     {
-        PlaceOrderRequest request = Pizzas.PickupOrder();
-        OrderQuote emptyQuote = new([], 0m, 0m, 0m, 0m);
+        Assert.Throws<ArgumentException>(() => Order.Place(new FakeTimeProvider(PlacedTime), Pizzas.Order(), []));
+    }
 
-        Assert.Throws<ArgumentException>(() => Order.Place(_timeProvider, request, emptyQuote));
+    [Fact]
+    public void MarkReady_SetsReadyAndTheTime()
+    {
+        Order order = PlaceOrder(Pizzas.Order(Pizzas.Custom()));
+
+        order.MarkReady(new FakeTimeProvider(ReadyTime));
+
+        Assert.Equal(OrderStatus.Ready, order.Status);
+        Assert.Equal(ReadyTime, order.ReadyAt);
+    }
+
+    [Fact]
+    public void MarkReady_WhenAlreadyReady_KeepsTheFirstTime()
+    {
+        Order order = PlaceOrder(Pizzas.Order(Pizzas.Custom()));
+        order.MarkReady(new FakeTimeProvider(ReadyTime));
+
+        order.MarkReady(new FakeTimeProvider(ReadyTime.AddMinutes(5)));
+
+        Assert.Equal(OrderStatus.Ready, order.Status);
+        Assert.Equal(ReadyTime, order.ReadyAt);
+    }
+
+    [Fact]
+    public void AssignOrderNumber_SetsTheNumber()
+    {
+        Order order = PlaceOrder(Pizzas.Order(Pizzas.Custom()));
+
+        order.AssignOrderNumber(1001);
+
+        Assert.Equal(1001, order.OrderNumber);
+    }
+
+    [Theory]
+    [InlineData(0)]
+    [InlineData(-5)]
+    public void AssignOrderNumber_BelowOne_Throws(int orderNumber)
+    {
+        Order order = PlaceOrder(Pizzas.Order(Pizzas.Custom()));
+
+        Assert.Throws<ArgumentOutOfRangeException>(() => order.AssignOrderNumber(orderNumber));
     }
 }

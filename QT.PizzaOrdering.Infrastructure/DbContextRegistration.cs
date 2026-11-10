@@ -31,8 +31,6 @@ public static class DbContextRegistration
 
         MenuCatalog menu = MenuSeed.Create();
         dbContext.Sizes.AddRange(menu.Sizes);
-        dbContext.Crusts.AddRange(menu.Crusts);
-        dbContext.Sauces.AddRange(menu.Sauces);
         dbContext.Toppings.AddRange(menu.Toppings);
         dbContext.PresetPizzas.AddRange(menu.PresetPizzas);
         await dbContext.SaveChangesAsync(ct);

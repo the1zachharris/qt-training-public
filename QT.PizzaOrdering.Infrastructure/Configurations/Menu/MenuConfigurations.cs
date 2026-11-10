@@ -18,28 +18,6 @@ public sealed class PizzaSizeConfiguration : IEntityTypeConfiguration<PizzaSize>
     }
 }
 
-public sealed class CrustConfiguration : IEntityTypeConfiguration<Crust>
-{
-    public void Configure(EntityTypeBuilder<Crust> builder)
-    {
-        builder.ToTable("Crust");
-        builder.HasKey(crust => crust.Id);
-        builder.Property(crust => crust.Id).ValueGeneratedNever();
-        builder.Property(crust => crust.Name).HasMaxLength(50);
-    }
-}
-
-public sealed class SauceConfiguration : IEntityTypeConfiguration<Sauce>
-{
-    public void Configure(EntityTypeBuilder<Sauce> builder)
-    {
-        builder.ToTable("Sauce");
-        builder.HasKey(sauce => sauce.Id);
-        builder.Property(sauce => sauce.Id).ValueGeneratedNever();
-        builder.Property(sauce => sauce.Name).HasMaxLength(50);
-    }
-}
-
 public sealed class ToppingConfiguration : IEntityTypeConfiguration<Topping>
 {
     public void Configure(EntityTypeBuilder<Topping> builder)
@@ -48,7 +26,6 @@ public sealed class ToppingConfiguration : IEntityTypeConfiguration<Topping>
         builder.HasKey(topping => topping.Id);
         builder.Property(topping => topping.Id).ValueGeneratedNever();
         builder.Property(topping => topping.Name).HasMaxLength(50);
-        builder.Property(topping => topping.Category).HasConversion<string>().HasMaxLength(20);
     }
 }
 
@@ -61,8 +38,5 @@ public sealed class PresetPizzaConfiguration : IEntityTypeConfiguration<PresetPi
         builder.Property(preset => preset.Id).ValueGeneratedNever();
         builder.Property(preset => preset.Name).HasMaxLength(50);
         builder.Property(preset => preset.Description).HasMaxLength(250);
-        builder.Property(preset => preset.Cheese).HasConversion<string>().HasMaxLength(20);
-        builder.HasOne<Crust>().WithMany().HasForeignKey(preset => preset.CrustId).OnDelete(DeleteBehavior.Restrict);
-        builder.HasOne<Sauce>().WithMany().HasForeignKey(preset => preset.SauceId).OnDelete(DeleteBehavior.Restrict);
     }
 }

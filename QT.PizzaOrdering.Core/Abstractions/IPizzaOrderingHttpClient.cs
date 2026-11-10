@@ -13,9 +13,7 @@ public interface IPizzaOrderingHttpClient
 {
     Task<ClientResult<MenuCatalog>> GetMenuAsync(CancellationToken ct = default);
 
-    Task<ClientResult<OrderQuote>> QuoteOrderAsync(QuoteOrderRequest request, CancellationToken ct = default);
+    Task<ClientResult<OrderDetails>> PlaceOrderAsync(PlaceOrderRequest request, CancellationToken ct = default);
 
-    Task<ClientResult<OrderConfirmation>> PlaceOrderAsync(PlaceOrderRequest request, CancellationToken ct = default);
-
-    Task<ClientResult<OrderConfirmation>> GetOrderAsync(Guid orderId, CancellationToken ct = default);
+    Task<ClientResult<OrderDetails>> GetOrderAsync(Guid orderId, CancellationToken ct = default);
 }

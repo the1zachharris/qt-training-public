@@ -1,7 +1,6 @@
 using Microsoft.AspNetCore.Http.Features;
 
 using QT.PizzaOrdering.API;
-using QT.PizzaOrdering.API.Configs;
 using QT.PizzaOrdering.API.Endpoints;
 using QT.PizzaOrdering.API.Middleware;
 using QT.PizzaOrdering.Infrastructure;
@@ -49,8 +48,6 @@ try
     // Tests build many hosts in one process; Serilog's static logger is registered outside Test only.
     if (!builder.Environment.IsTest())
         builder.AddNonTestServices();
-
-    builder.Services.AddOptions<OrderPricingConfig>().Bind(builder.Configuration.GetSection(OrderPricingConfig.SectionName)).ValidateDataAnnotations().ValidateOnStart();
 
     // TimeProvider
     builder.Services.AddSingleton(TimeProvider.System);

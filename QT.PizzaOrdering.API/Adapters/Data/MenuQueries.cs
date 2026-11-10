@@ -12,8 +12,6 @@ public class MenuQueries(PizzaOrderingDbContext dbContext) : IMenuQueries
     {
         return new MenuCatalog(
             await dbContext.Sizes.AsNoTracking().OrderBy(size => size.Id).ToListAsync(ct),
-            await dbContext.Crusts.AsNoTracking().OrderBy(crust => crust.Id).ToListAsync(ct),
-            await dbContext.Sauces.AsNoTracking().OrderBy(sauce => sauce.Id).ToListAsync(ct),
             await dbContext.Toppings.AsNoTracking().OrderBy(topping => topping.Id).ToListAsync(ct),
             await dbContext.PresetPizzas.AsNoTracking().OrderBy(preset => preset.Id).ToListAsync(ct));
     }
