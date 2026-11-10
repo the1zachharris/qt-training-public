@@ -45,3 +45,5 @@ Thumbs.db
 .claude/settings.local.json
 test-results-exploratory/
 playwright-report-exploratory/
+test-results-accessibility/
+playwright-report-accessibility/
