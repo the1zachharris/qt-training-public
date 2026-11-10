@@ -2,7 +2,8 @@
     <MudCardContent>
         <MudStack Row AlignItems="AlignItems.Start" Spacing="3">
             <MudStack Spacing="0" Class="kitchen-card-who">
-                <MudText Typo="Typo.h5" Style="font-weight: bold;">@PizzaText.OrderNumber(Order.OrderNumber)</MudText>
+                @* Each card is a section under its column's h2. *@
+                <MudText Typo="Typo.h5" HtmlTag="h3" Style="font-weight: bold;">@PizzaText.OrderNumber(Order.OrderNumber)</MudText>
                 <MudText Typo="Typo.subtitle1" Class="customer-name">@Order.CustomerName</MudText>
             </MudStack>
             <MudSpacer />
@@ -21,7 +22,7 @@
             <MudSpacer />
             @if (!IsReady)
             {
-                <MudButton Variant="Variant.Filled" Color="Color.Success" StartIcon="@Icons.Material.Filled.Check" Disabled="@Busy" OnClick="@(() => OnMarkReady.InvokeAsync(Order))">Mark Ready</MudButton>
+                <MudButton @ref="_markReady" Variant="Variant.Filled" Color="Color.Success" StartIcon="@Icons.Material.Filled.Check" Disabled="@Busy" OnClick="@(() => OnMarkReady.InvokeAsync(Order))">Mark Ready</MudButton>
             }
         </MudStack>
     </MudCardContent>
@@ -35,7 +36,19 @@
 
     [Parameter] public EventCallback<OrderDetails> OnMarkReady { get; set; }
 
+    private MudButton? _markReady;
+
     private bool IsReady => Order.Status == OrderStatus.Ready;
+
+    /// <summary>Puts keyboard focus on this card's Mark Ready button, if it has one.</summary>
+    public async Task<bool> FocusMarkReadyAsync()
+    {
+        if (_markReady is null || IsReady || Busy)
+            return false;
+
+        await _markReady.FocusAsync();
+        return true;
+    }
 
     private string TimeText => IsReady && Order.ReadyAt is { } readyAt
         ? $"Ready {readyAt.ToLocalTime():h:mm tt}"

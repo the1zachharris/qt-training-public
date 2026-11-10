@@ -9,7 +9,7 @@
             <MudSpacer />
             @if (!Loading && !Cart.IsEmpty)
             {
-                <MudButton Variant="Variant.Text" Color="Color.Default" StartIcon="@Icons.Material.Filled.DeleteSweep" OnClick="@Cart.ClearAsync">Start Over</MudButton>
+                <MudButton Variant="Variant.Text" Color="Color.Default" StartIcon="@Icons.Material.Filled.DeleteSweep" OnClick="@StartOverAsync">Start Over</MudButton>
             }
         </MudStack>
         <StatusAlert Status="@Status" Class="mb-3" />
@@ -21,8 +21,9 @@
         {
             <MudStack AlignItems="AlignItems.Center" Spacing="3" Class="my-12">
                 <MudIcon Icon="@Icons.Material.Outlined.ShoppingCart" Size="Size.Large" Class="mud-text-secondary" />
-                <MudText Typo="Typo.h6">You have not added any pizzas yet.</MudText>
-                <MudButton Variant="Variant.Filled" Color="Color.Primary" Href="/menu" StartIcon="@Icons.Material.Filled.LocalPizza">See the Menu</MudButton>
+                @* Styled like a heading, but it is a sentence rather than the title of a section. *@
+                <MudText Typo="Typo.h6" HtmlTag="p" id="cart-empty-message">You have not added any pizzas yet.</MudText>
+                <MudButton @ref="_seeMenuButton" Variant="Variant.Filled" Color="Color.Primary" Href="/menu" StartIcon="@Icons.Material.Filled.LocalPizza" aria-describedby="cart-empty-message">See the Menu</MudButton>
             </MudStack>
         }
         else
@@ -34,7 +35,7 @@
                         <th>Quantity</th>
                         <th class="money cart-each">Each</th>
                         <th class="money">Price</th>
-                        <th></th>
+                        <th><span class="mud-sr-only">Actions</span></th>
                     </tr>
                 </thead>
                 <tbody>
@@ -44,9 +45,9 @@
                             <td><PizzaSummary Pizza="@item.Pizza" /></td>
                             <td>
                                 <MudStack Row AlignItems="AlignItems.Center" Spacing="1">
-                                    <MudIconButton Icon="@Icons.Material.Filled.Remove" Size="Size.Small" Disabled="@(item.Pizza.Quantity <= 1)" OnClick="@(() => Cart.SetQuantityAsync(item.Id, item.Pizza.Quantity - 1))" aria-label="One fewer" />
+                                    <MudIconButton @ref="_fewerButtons[item.Id]" Icon="@Icons.Material.Filled.Remove" Size="Size.Small" Disabled="@(item.Pizza.Quantity <= 1)" OnClick="@(() => ChangeQuantityAsync(item, -1))" aria-label="@($"One fewer {LineName(item)}")" />
                                     <MudText Class="cart-quantity">@item.Pizza.Quantity</MudText>
-                                    <MudIconButton Icon="@Icons.Material.Filled.Add" Size="Size.Small" Disabled="@(item.Pizza.Quantity >= PizzaPricer.MaxQuantity)" OnClick="@(() => Cart.SetQuantityAsync(item.Id, item.Pizza.Quantity + 1))" aria-label="One more" />
+                                    <MudIconButton @ref="_moreButtons[item.Id]" Icon="@Icons.Material.Filled.Add" Size="Size.Small" Disabled="@(item.Pizza.Quantity >= PizzaPricer.MaxQuantity)" OnClick="@(() => ChangeQuantityAsync(item, 1))" aria-label="@($"One more {LineName(item)}")" />
                                 </MudStack>
                             </td>
                             <td class="money cart-each">@item.Pizza.UnitPrice.ToCurrency()</td>
@@ -59,12 +60,11 @@
                                 }
                             </td>
                             <td class="money cart-actions">
-                                <MudTooltip Text="Change this pizza">
-                                    <MudIconButton Icon="@Icons.Material.Filled.Edit" Size="Size.Small" OnClick="@(() => EditAsync(item))" aria-label="Change this pizza" />
-                                </MudTooltip>
-                                <MudTooltip Text="Remove">
-                                    <MudIconButton Icon="@Icons.Material.Filled.Delete" Size="Size.Small" Color="Color.Error" OnClick="@(() => Cart.RemoveAsync(item.Id))" aria-label="Remove" />
-                                </MudTooltip>
+                                @* A native title, not MudTooltip: MudTooltip cannot be dismissed with Escape or
+                                   hovered (WCAG 1.4.13), while browser tooltips are outside that criterion.
+                                   The title matches the accessible name, so it is not announced twice. *@
+                                <MudIconButton Icon="@Icons.Material.Filled.Edit" Size="Size.Small" OnClick="@(() => EditAsync(item))" aria-label="@($"Change {LineName(item)}")" title="@($"Change {LineName(item)}")" />
+                                <MudIconButton @ref="_removeButtons[item.Id]" Icon="@Icons.Material.Filled.Delete" Size="Size.Small" Color="Color.Error" OnClick="@(() => RemoveAsync(item))" aria-label="@($"Remove {LineName(item)}")" title="@($"Remove {LineName(item)}")" />
                             </td>
                         </tr>
                     }
@@ -74,7 +74,7 @@
             <MudStack Row AlignItems="AlignItems.Center" Spacing="4" Class="mt-4" Wrap="Wrap.Wrap">
                 <MudButton Variant="Variant.Text" Color="Color.Default" Href="/menu" StartIcon="@Icons.Material.Filled.ArrowBack">Add Another Pizza</MudButton>
                 <MudSpacer />
-                <MudText Typo="Typo.h6">@($"Total {Cart.Total.ToCurrency()}")</MudText>
+                <MudText Typo="Typo.h6" HtmlTag="p">@($"Total {Cart.Total.ToCurrency()}")</MudText>
                 <MudButton Variant="Variant.Filled" Color="Color.Success" Size="Size.Large" Href="/checkout" EndIcon="@Icons.Material.Filled.ArrowForward">Continue</MudButton>
             </MudStack>
         }

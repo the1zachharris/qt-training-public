@@ -13,6 +13,8 @@
             }
             <MudButton Variant="Variant.Text" Color="Color.Default" StartIcon="@Icons.Material.Filled.Refresh" Disabled="@Refreshing" OnClick="@RefreshAsync">Refresh</MudButton>
         </MudStack>
+        @* Read out by screen readers when a refresh brings in new orders; the board itself shows them. *@
+        <div role="status" aria-live="polite" class="mud-sr-only">@Arrivals</div>
         <StatusAlert Status="@RefreshProblem" Class="mb-3" />
         <StatusAlert Status="@ActionProblem" Class="mb-3" />
         @if (Orders is null)
@@ -26,7 +28,8 @@
         {
             <MudGrid Spacing="6">
                 <MudItem xs="12" md="7">
-                    <MudText Typo="Typo.h6" Class="mb-3">@($"New ({Orders.New.Count})")</MudText>
+                    @* A plain h2 with MudText's classes, because focus moves here when the last New order is marked Ready. *@
+                    <h2 @ref="_newHeading" tabindex="-1" class="mud-typography mud-typography-h6 mb-3">@($"New ({Orders.New.Count})")</h2>
                     @if (Orders.New.Count == 0)
                     {
                         <MudText Class="mud-text-secondary">No orders waiting.</MudText>
@@ -34,12 +37,12 @@
                     <MudStack Spacing="3">
                         @foreach (OrderDetails order in Orders.New)
                         {
-                            <KitchenOrderCard @key="order.Id" Order="@order" Busy="@IsMarking(order.Id)" OnMarkReady="@MarkReadyAsync" />
+                            <KitchenOrderCard @key="order.Id" @ref="_newCards[order.Id]" Order="@order" Busy="@IsMarking(order.Id)" OnMarkReady="@MarkReadyAsync" />
                         }
                     </MudStack>
                 </MudItem>
                 <MudItem xs="12" md="5">
-                    <MudText Typo="Typo.h6" Class="mb-3">@($"Ready ({Orders.Ready.Count})")</MudText>
+                    <MudText Typo="Typo.h6" HtmlTag="h2" Class="mb-3">@($"Ready ({Orders.Ready.Count})")</MudText>
                     @if (Orders.Ready.Count == 0)
                     {
                         <MudText Class="mud-text-secondary">Nothing ready yet.</MudText>

@@ -181,7 +181,8 @@ test.describe('2.1.1 Keyboard, 2.4.3 Focus Order', () => {
     await addPreset(page, 2);
     await page.getByRole('link', { name: /Review Order/ }).click();
     await expect(page.getByRole('link', { name: 'Continue' })).toBeVisible();
-    const toRemove = await tabTo(page, /"Remove"/, 40);
+    // The Remove buttons are named for their line, e.g. "Remove The Works, Small (10")".
+    const toRemove = await tabTo(page, /"Remove /, 40);
     expect(toRemove.found).toBe(true);
     await page.keyboard.press('Enter');
     await page.waitForTimeout(800);
@@ -324,6 +325,9 @@ test.describe('1.4.10 Reflow, 1.4.4 Resize Text, 1.4.12 Text Spacing', () => {
       const hides = ['hidden', 'clip'];
       const r = el.getBoundingClientRect();
       if (r.width === 0) continue;
+      // Screen-reader-only text (e.g. .mud-sr-only) is clipped to a 1x1 box on purpose; it is never
+      // shown, so text spacing and zoom cannot hide it.
+      if (el.clientWidth <= 1 && el.clientHeight <= 1) continue;
       if ((hides.includes(style.overflowY) && el.scrollHeight > el.clientHeight + 2) || (hides.includes(style.overflowX) && el.scrollWidth > el.clientWidth + 2)) {
         clipped.push(`${el.tagName.toLowerCase()}.${(el.className?.toString() ?? '').split(' ').slice(0, 2).join('.')} "${el.textContent.trim().slice(0, 40)}" (${el.scrollWidth}x${el.scrollHeight} in ${el.clientWidth}x${el.clientHeight})`);
       }
@@ -461,15 +465,19 @@ test.describe('4.1.2 Name, Role, Value; 1.3.1 Info and Relationships; 3.3 Input 
   test('page structure: landmarks, skip link, and heading levels', async ({ page, request }, testInfo) => {
     const out: Record<string, unknown> = {};
     for (const state of STATES.filter(s => ['menu', 'cart with pizzas', 'checkout', 'order confirmation', 'kitchen', 'order not found', 'page not found'].includes(s.name))) {
-      await openMenu(page);
-      await state.go(page, request);
-      out[state.name] = await page.evaluate(() => ({
+      // A fresh tab per state: the cart lives in sessionStorage, so reusing one tab carried pizzas
+      // from one state into the next and broke addPreset's "(1)" count check.
+      const tab = await page.context().newPage();
+      await openMenu(tab);
+      await state.go(tab, request);
+      out[state.name] = await tab.evaluate(() => ({
         main: document.querySelectorAll('main, [role=main]').length,
         nav: document.querySelectorAll('nav, [role=navigation]').length,
         banner: document.querySelectorAll('header, [role=banner]').length,
         skipLink: !!Array.from(document.querySelectorAll('a[href^="#"]')).find(a => /skip|main/i.test(a.textContent ?? '')),
         headings: Array.from(document.querySelectorAll('h1,h2,h3,h4,h5,h6')).filter(h => (h as HTMLElement).offsetParent !== null).map(h => `${h.tagName} ${h.textContent?.trim().slice(0, 40)}`),
       }));
+      await tab.close();
     }
     record(testInfo, 'page structure', out);
     for (const [name, s] of Object.entries(out) as [string, any][]) {
@@ -510,8 +518,21 @@ test.describe('4.1.3 Status Messages, 2.2.1 Timing, 1.4.13 Content on Hover or F
     const remove = page.getByRole('button', { name: 'Remove' }).first();
     await expect(remove).toBeVisible();
     await remove.hover();
-    const tooltip = page.locator('.mud-tooltip').filter({ hasText: 'Remove' });
-    await expect(tooltip).toBeVisible();
+    await page.waitForTimeout(500);
+    // 1.4.13 covers content the page itself shows on hover or focus. A native title tooltip is drawn
+    // by the browser and is outside the criterion, so the checks below run only when the page shows
+    // its own tooltip (MudTooltip, or anything with role=tooltip).
+    const tooltip = page.locator('.mud-tooltip, [role=tooltip]').filter({ hasText: 'Remove' });
+    const customTooltip = await tooltip.isVisible();
+    const nativeTitle = await remove.getAttribute('title');
+    if (!customTooltip) {
+      await remove.focus();
+      await page.waitForTimeout(300);
+      const showsOnFocus = await tooltip.isVisible();
+      record(testInfo, 'tooltips', { customTooltip, showsOnFocus, nativeTitle });
+      expect.soft(showsOnFocus, 'no page tooltip appears on focus either').toBe(false);
+      return;
+    }
     await page.keyboard.press('Escape');
     await page.waitForTimeout(300);
     const dismissedByEscape = !(await tooltip.isVisible());
@@ -524,8 +545,8 @@ test.describe('4.1.3 Status Messages, 2.2.1 Timing, 1.4.13 Content on Hover or F
     const hoverable = await tooltip.isVisible();
     await remove.focus();
     await page.waitForTimeout(300);
-    const showsOnFocus = await page.locator('.mud-tooltip').filter({ hasText: 'Remove' }).isVisible();
-    record(testInfo, 'tooltips', { dismissedByEscape, hoverable, showsOnFocus });
+    const showsOnFocus = await tooltip.isVisible();
+    record(testInfo, 'tooltips', { customTooltip, dismissedByEscape, hoverable, showsOnFocus, nativeTitle });
     expect.soft(dismissedByEscape, '1.4.13 dismissible with Escape').toBe(true);
     expect.soft(hoverable, '1.4.13 hoverable').toBe(true);
   });
