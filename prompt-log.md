@@ -25,3 +25,10 @@ Go ahead and implement this plan
 (No new user prompt. This turn continued "Go ahead and implement this plan" when the independent branch review finished.)
 
 **Summary:** Made one fix pass on the review's important findings. The database now lives in a per-user application data folder (`DatabaseConfiguration.cs`, `DbContextRegistration.cs`, `DIConfiguration.cs`) so every way of launching the app opens the same orders; the Kitchen link was removed from the customer navigation (`CustomerNavigation.cs`, `MainLayout.razor`); checkout no longer claims an order "was not placed" when the outcome is unknown (`CheckoutMessages.cs`, `CheckoutPage.razor.cs`). Added real tests for cart storage, database location, navigation, and checkout messages; 103 tests pass.
+
+## 2026-11-10 14:57 · ZH-pass1
+
+**Prompt:**
+can you use playwright to test this application
+
+**Summary:** Added a Playwright end-to-end suite in `e2e/` (`playwright.config.ts`, `tests/ordering.spec.ts`, `tests/kitchen.spec.ts`, `tests/helpers.ts`, `README.md`, `package.json`). It starts its own Release-build API and UI on separate ports with a temp database and runs in the installed Edge. The 11 tests cover AC-1.1 through AC-4.3, including an API restart, and all 11 pass (22/22 when each test runs twice).
