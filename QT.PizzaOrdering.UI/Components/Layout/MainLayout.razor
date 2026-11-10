@@ -88,9 +88,14 @@
             DrawerIcon = "rgba(255,255,255, 0.87)",
             Background = "#ECEFF1",
             Surface = "#FFFFFF",
-            Error = "#F44336",
-            Warning = "#FF9800",
-            Info = "#3F51B5"
+            // WCAG 2.2 AA (1.4.3 / 1.4.11) adjustments for the light theme. Ratios measured
+            // against white unless noted; MudBlazor derives the alert text ("-darken") and the
+            // alert tint ("-hover") from these, so both inherit the extra contrast.
+            Success = "#1B7D3A",      // white text 5.20:1 (default #00c853 was 2.24:1)
+            Error = "#D32F2F",        // on white 4.98:1 (was #F44336 at 3.68:1)
+            Warning = "#B45309",      // white text 5.02:1; outlined alert text 6.7:1 on its tint
+            Info = "#3F51B5",         // unchanged: white text 6.87:1; outlined alert text 8.0:1
+            LinesInputs = "#858585"   // outlined field border 3.69:1 on white (was 1.88:1)
         },
 
         PaletteDark = new PaletteDark()
