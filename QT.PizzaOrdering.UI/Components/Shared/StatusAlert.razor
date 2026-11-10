@@ -1,0 +1,16 @@
+@if (Status is not null)
+{
+    <MudAlert Severity="@Status.Severity"
+              ContentAlignment="HorizontalAlignment.Left"
+              Class="@Class">
+        @Status.Message
+    </MudAlert>
+}
+
+@code {
+    [Parameter]
+    public StatusMessage? Status { get; set; }
+
+    [Parameter]
+    public string? Class { get; set; }
+}

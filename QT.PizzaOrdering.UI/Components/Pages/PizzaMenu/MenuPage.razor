@@ -1,0 +1,52 @@
+@page "/"
+@page "/menu"
+
+<PageTitle>Menu - Pizza Ordering</PageTitle>
+
+<MudContainer MaxWidth="MaxWidth.ExtraLarge" Class="my-4">
+    <MudPaper Class="page-shell">
+        <MudStack Row AlignItems="AlignItems.Center" Spacing="2" Class="mb-3">
+            <MudText Typo="Typo.h5" Style="font-weight: bold;">Menu</MudText>
+            <MudSpacer />
+            @if (!Cart.IsEmpty)
+            {
+                <MudButton Variant="Variant.Filled" Color="Color.Success" Href="/cart" StartIcon="@Icons.Material.Filled.ShoppingCart">
+                    @($"View Cart ({Cart.PizzaCount})")
+                </MudButton>
+            }
+        </MudStack>
+        <StatusAlert Status="@Status" Class="mb-3" />
+        @if (Loading)
+        {
+            <MudProgressCircular Indeterminate Class="my-4" />
+        }
+        else if (Menu is not null)
+        {
+            <MudPaper Outlined Elevation="0" Class="build-your-own-banner mb-6">
+                <MudStack Row AlignItems="AlignItems.Center" Spacing="4" Wrap="Wrap.Wrap">
+                    <MudIcon Icon="@Icons.Material.Filled.LocalPizza" Color="Color.Primary" Size="Size.Large" />
+                    <MudStack Spacing="0">
+                        <MudText Typo="Typo.h6">Build Your Own</MudText>
+                        <MudText Typo="Typo.body2" Class="mud-text-secondary">
+                            @($"Pick a size, crust, and sauce, then add up to {PizzaPricer.MaxToppings} toppings. Starts at {StartingPrice.ToCurrency()}.")
+                        </MudText>
+                    </MudStack>
+                    <MudSpacer />
+                    <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Tune" OnClick="@BuildYourOwnAsync">
+                        Start Building
+                    </MudButton>
+                </MudStack>
+            </MudPaper>
+
+            <MudText Typo="Typo.h6" Class="mb-3">Specialty Pizzas</MudText>
+            <MudGrid Spacing="4">
+                @foreach (PresetPizza preset in Menu.PresetPizzas)
+                {
+                    <MudItem xs="12" sm="6" lg="4" @key="preset.Id">
+                        <PresetPizzaCard Menu="@Menu" Preset="@preset" OnAdd="@AddToCartAsync" OnCustomize="@(selection => CustomizeAsync(selection, preset.Name))" />
+                    </MudItem>
+                }
+            </MudGrid>
+        }
+    </MudPaper>
+</MudContainer>

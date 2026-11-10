@@ -1,0 +1,53 @@
+html, body {
+    font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+}
+
+h1:focus {
+    outline: none;
+}
+
+.blazor-error-boundary {
+    background: #b32121;
+    padding: 1rem;
+    color: white;
+}
+
+    .blazor-error-boundary::after {
+        content: "An error has occurred."
+    }
+
+/* The paper every page sits on. */
+.page-shell {
+    padding: 16px;
+    min-height: calc(100vh - 120px);
+}
+
+/* Preset cards in one row share a height, with the price and buttons pinned to the bottom. */
+.preset-card {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+}
+
+    .preset-card .mud-card-content {
+        flex: 1 1 auto;
+    }
+
+.build-your-own-banner {
+    padding: 16px;
+    border-left: 6px solid var(--mud-palette-primary);
+}
+
+.cart-quantity {
+    min-width: 2ch;
+    text-align: center;
+}
+
+/* The table selector repeats MudSimpleTable's own cell rule so right-alignment wins inside the cart table. */
+.money,
+.mud-simple-table table * tr > td.money,
+.mud-simple-table table * tr > th.money {
+    text-align: right;
+    white-space: nowrap;
+    font-variant-numeric: tabular-nums;
+}

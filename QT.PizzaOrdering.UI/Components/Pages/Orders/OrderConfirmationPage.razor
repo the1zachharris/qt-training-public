@@ -1,0 +1,85 @@
+@page "/orders/{OrderId:guid}"
+
+<PageTitle>Order Confirmation - Pizza Ordering</PageTitle>
+
+<MudContainer MaxWidth="MaxWidth.Medium" Class="my-4">
+    <MudPaper Class="page-shell">
+        <StatusAlert Status="@Status" Class="mb-3" />
+        @if (Loading)
+        {
+            <MudProgressCircular Indeterminate Class="my-4" />
+        }
+        else if (Order is not null)
+        {
+            <MudStack Row AlignItems="AlignItems.Center" Spacing="3" Class="mb-4">
+                <MudIcon Icon="@Icons.Material.Filled.CheckCircle" Color="Color.Success" Size="Size.Large" />
+                <MudStack Spacing="0">
+                    <MudText Typo="Typo.h5" Style="font-weight: bold;">@($"Thanks, {Order.CustomerName}! Your order is in.")</MudText>
+                    <MudText Class="mud-text-secondary">@($"Order {Order.OrderNumber} · placed {Order.PlacedAt.ToLocalTime():MMM d, yyyy h:mm tt}")</MudText>
+                </MudStack>
+            </MudStack>
+
+            <MudAlert Severity="Severity.Info" Variant="Variant.Outlined" Class="mb-4">
+                @if (Order.Fulfillment == FulfillmentType.Delivery)
+                {
+                    @($"Delivery to {Order.DeliveryAddress}. Pay when your order arrives.")
+                }
+                else
+                {
+                    @("Pickup. Pay when you pick up your order.")
+                }
+            </MudAlert>
+
+            <MudStack Spacing="3">
+                @foreach (PricedPizza pizza in Order.Pizzas)
+                {
+                    <MudStack Row Justify="Justify.SpaceBetween" Spacing="4">
+                        <div><PizzaSummary Pizza="@pizza" ShowQuantity /></div>
+                        <MudText Class="money">@pizza.LineTotal.ToCurrency()</MudText>
+                    </MudStack>
+                }
+                @if (!string.IsNullOrEmpty(Order.Notes))
+                {
+                    <MudText Typo="Typo.body2" Class="mud-text-secondary">@($"Notes: {Order.Notes}")</MudText>
+                }
+                <MudDivider />
+                <OrderTotals Subtotal="@Order.Subtotal" Tax="@Order.Tax" DeliveryFee="@Order.DeliveryFee" Total="@Order.Total" />
+            </MudStack>
+
+            <MudStack Row Class="mt-6">
+                <MudSpacer />
+                <MudButton Variant="Variant.Filled" Color="Color.Primary" Href="/menu" StartIcon="@Icons.Material.Filled.LocalPizza">Order More</MudButton>
+            </MudStack>
+        }
+        else
+        {
+            <MudButton Variant="Variant.Filled" Color="Color.Primary" Href="/menu" StartIcon="@Icons.Material.Filled.LocalPizza">Back to the Menu</MudButton>
+        }
+    </MudPaper>
+</MudContainer>
+
+@code {
+    [Parameter] public Guid OrderId { get; set; }
+    [Inject] private IPizzaOrderingHttpClient Client { get; set; } = default!;
+
+    private OrderConfirmation? Order { get; set; }
+    private bool Loading { get; set; } = true;
+    private StatusMessage? Status { get; set; }
+
+    protected override async Task OnParametersSetAsync()
+    {
+        Loading = true;
+        Status = null;
+
+        ClientResult<OrderConfirmation> result = await Client.GetOrderAsync(OrderId);
+        Order = result.Data;
+        if (result.IsFailure)
+        {
+            Status = result.Error?.Status == System.Net.HttpStatusCode.NotFound
+                ? StatusMessage.Warning("We could not find that order.")
+                : StatusMessage.Error($"The order could not be loaded. {result.Error?.Message}");
+        }
+
+        Loading = false;
+    }
+}

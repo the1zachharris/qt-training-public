@@ -1,0 +1,132 @@
+@using System.Security.Cryptography
+@using Microsoft.AspNetCore.Components.Server.ProtectedBrowserStorage
+@using QT.PizzaOrdering.UI.Components.Templates
+@inherits LayoutComponentBase
+@implements IDisposable
+
+<MudThemeProvider IsDarkMode="@IsDarkMode" Theme="CurrentTheme" />
+<MudPopoverProvider />
+<MudDialogProvider CloseOnEscapeKey="false" BackdropClick="false" MaxWidth="MaxWidth.Large" />
+<MudSnackbarProvider />
+
+<MudLayout>
+    <QTHeader DisplayNavMenuIcon="true" AppTitle="@AppName" OnMenuClick="@(_ => ToggleMenu())">
+        <ContentSection>
+            <MudBadge Content="@Cart.PizzaCount" Visible="@(Cart.PizzaCount > 0)" Color="Color.Primary" Overlap="true" Class="mx-2">
+                <MudIconButton Icon="@Icons.Material.Filled.ShoppingCart" Color="Color.Inherit" Size="Size.Medium" Href="/cart" aria-label="Cart" />
+            </MudBadge>
+            <MudIconButton Color="Color.Inherit" Size="Size.Medium" OnClick="@DarkModeAsync" Icon="@(IsDarkMode ? Icons.Material.Filled.DarkMode : Icons.Material.Filled.LightMode)" aria-label="Toggle dark mode" />
+        </ContentSection>
+    </QTHeader>
+    <MudDrawer @bind-Open="@ControlBarOpen" ClipMode="DrawerClipMode.Always" Class="navigation-drawer" Variant="@DrawerVariant.Responsive" Elevation="0">
+        <MudNavMenu Bordered="true">
+            @foreach (NavMenuItem item in NavItems)
+            {
+                <MudNavLink Href="@item.Href" Icon="@item.Icon" Match="@item.Match">@item.Text</MudNavLink>
+            }
+        </MudNavMenu>
+    </MudDrawer>
+    <MudMainContent>
+        @Body
+    </MudMainContent>
+</MudLayout>
+
+@code {
+    private const string AppName = "Pizza Ordering";
+    private static LayoutProperties BaseLayoutProperties { get; } = new() { AppbarHeight = "56px", DrawerWidthLeft = "240px", DrawerWidthRight = "240px" };
+
+    private static readonly NavMenuItem[] NavItems =
+    [
+        new("/", "Menu", Icons.Material.Filled.LocalPizza, NavLinkMatch.All),
+        new("/cart", "Cart", Icons.Material.Filled.ShoppingCart, NavLinkMatch.Prefix)
+    ];
+
+    private bool ControlBarOpen { get; set; } = false;
+    private bool IsDarkMode { get; set; }
+    [Inject] private ProtectedSessionStorage ProtectedSessionStorage { get; set; } = default!;
+    [Inject] private CartState Cart { get; set; } = default!;
+
+    protected override async Task OnInitializedAsync()
+    {
+        Cart.Changed += OnCartChanged;
+        await Cart.EnsureLoadedAsync();
+        try
+        {
+            ProtectedBrowserStorageResult<bool> result = await ProtectedSessionStorage.GetAsync<bool>(nameof(IsDarkMode));
+            IsDarkMode = result.Success && result.Value;
+        }
+        catch (CryptographicException)
+        {
+            // The stored value was protected with a key this server no longer has; fall back to light mode.
+            IsDarkMode = false;
+        }
+    }
+
+    private record NavMenuItem(string Href, string Text, string Icon, NavLinkMatch Match);
+
+    private void OnCartChanged() => InvokeAsync(StateHasChanged);
+
+    private void ToggleMenu()
+    {
+        ControlBarOpen = !ControlBarOpen;
+    }
+
+    private async Task DarkModeAsync()
+    {
+        IsDarkMode = !IsDarkMode;
+        await ProtectedSessionStorage.SetAsync(nameof(IsDarkMode), IsDarkMode);
+    }
+
+    public void Dispose()
+    {
+        Cart.Changed -= OnCartChanged;
+    }
+
+    private MudTheme CurrentTheme { get; } = new MudTheme
+    {
+        PaletteLight = new PaletteLight()
+        {
+            Primary = "#CF0A2C",
+            Secondary = "#2196F3",
+            AppbarBackground = "#202126",
+            DrawerBackground = "#2e3032",
+            DrawerText = "rgba(255,255,255, 0.87)",
+            DrawerIcon = "rgba(255,255,255, 0.87)",
+            Background = "#ECEFF1",
+            Surface = "#FFFFFF",
+            Error = "#F44336",
+            Warning = "#FF9800",
+            Info = "#3F51B5"
+        },
+
+        PaletteDark = new PaletteDark()
+        {
+            Primary = "#CF0A2C",
+            Secondary = "#2196F3",
+            Error = "#F44336",
+            Warning = "#FF9800",
+            Info = "#85C1E9",
+            Black = "#202126",
+            Background = "#32333d",
+            BackgroundGray = "#202126",
+            Surface = "#3C4042",
+            DrawerBackground = "#2e3032",
+            DrawerText = "rgba(255,255,255, 0.70)",
+            DrawerIcon = "rgba(255,255,255, 0.70)",
+            AppbarBackground = "#202126",
+            AppbarText = "rgba(255,255,255, 0.70)",
+            TextPrimary = "#FFFFFF",
+            TextSecondary = "rgba(255,255,255, 0.50)",
+            ActionDefault = "#adadb1",
+            ActionDisabled = "rgba(255,255,255, 0.26)",
+            ActionDisabledBackground = "rgba(255,255,255, 0.12)",
+            Divider = "rgba(255,255,255, 0.12)",
+            DividerLight = "rgba(255,255,255, 0.06)",
+            TableLines = "rgba(255,255,255, 0.12)",
+            LinesDefault = "rgba(255,255,255, 0.12)",
+            LinesInputs = "rgba(255,255,255, 0.3)",
+            TextDisabled = "rgba(255,255,255, 0.2)",
+        },
+        LayoutProperties = BaseLayoutProperties
+    };
+}

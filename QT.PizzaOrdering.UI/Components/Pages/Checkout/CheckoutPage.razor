@@ -1,0 +1,90 @@
+@page "/checkout"
+
+<PageTitle>Checkout - Pizza Ordering</PageTitle>
+
+<MudContainer MaxWidth="MaxWidth.Large" Class="my-4">
+    <MudPaper Class="page-shell">
+        <MudStack Row AlignItems="AlignItems.Center" Spacing="2" Class="mb-3">
+            <MudText Typo="Typo.h5" Style="font-weight: bold;">Checkout</MudText>
+        </MudStack>
+        <StatusAlert Status="@Status" Class="mb-3" />
+        @if (Loading)
+        {
+            <MudProgressCircular Indeterminate Class="my-4" />
+        }
+        else if (Cart.IsEmpty)
+        {
+            <MudStack AlignItems="AlignItems.Center" Spacing="3" Class="my-12">
+                <MudText Typo="Typo.h6">There is nothing to check out yet.</MudText>
+                <MudButton Variant="Variant.Filled" Color="Color.Primary" Href="/menu" StartIcon="@Icons.Material.Filled.LocalPizza">Browse the Menu</MudButton>
+            </MudStack>
+        }
+        else
+        {
+            <MudGrid Spacing="6">
+                <MudItem xs="12" md="7">
+                    <MudText Typo="Typo.h6" Class="mb-3">Your Details</MudText>
+                    <MudStack Spacing="4">
+                        <MudTextField T="string" @bind-Value="CustomerName" Label="Name" Required Immediate
+                                      Variant="Variant.Outlined" Margin="Margin.Dense" MaxLength="100"
+                                      Error="@HasError(nameof(PlaceOrderRequest.CustomerName))" ErrorText="@ErrorFor(nameof(PlaceOrderRequest.CustomerName))" />
+                        <MudTextField T="string" @bind-Value="Phone" Label="Phone" Required Immediate InputType="InputType.Telephone"
+                                      Variant="Variant.Outlined" Margin="Margin.Dense" MaxLength="30"
+                                      HelperText="In case we need to reach you about this order."
+                                      Error="@HasError(nameof(PlaceOrderRequest.Phone))" ErrorText="@ErrorFor(nameof(PlaceOrderRequest.Phone))" />
+                        <MudRadioGroup T="FulfillmentType" Value="@Fulfillment" ValueChanged="@OnFulfillmentChangedAsync">
+                            <MudRadio T="FulfillmentType" Value="@FulfillmentType.Pickup" Color="Color.Primary">Pickup</MudRadio>
+                            <MudRadio T="FulfillmentType" Value="@FulfillmentType.Delivery" Color="Color.Primary">Delivery</MudRadio>
+                        </MudRadioGroup>
+                        @if (Fulfillment == FulfillmentType.Delivery)
+                        {
+                            <MudTextField T="string" @bind-Value="DeliveryAddress" Label="Delivery address" Required Immediate
+                                          Variant="Variant.Outlined" Margin="Margin.Dense" MaxLength="200"
+                                          Error="@HasError(nameof(PlaceOrderRequest.DeliveryAddress))" ErrorText="@ErrorFor(nameof(PlaceOrderRequest.DeliveryAddress))" />
+                        }
+                        <MudTextField T="string" @bind-Value="Notes" Label="Notes for the kitchen (optional)" Lines="2"
+                                      Variant="Variant.Outlined" Margin="Margin.Dense" MaxLength="500"
+                                      Error="@HasError(nameof(PlaceOrderRequest.Notes))" ErrorText="@ErrorFor(nameof(PlaceOrderRequest.Notes))" />
+                        <MudAlert Severity="Severity.Info" Dense Variant="Variant.Outlined">
+                            @(Fulfillment == FulfillmentType.Delivery ? "Pay when your order arrives." : "Pay when you pick up your order.") No card details are collected here.
+                        </MudAlert>
+                    </MudStack>
+                </MudItem>
+                <MudItem xs="12" md="5">
+                    <MudPaper Outlined Elevation="0" Class="pa-4">
+                        <MudText Typo="Typo.h6" Class="mb-3">Order Summary</MudText>
+                        <MudStack Spacing="3">
+                            @foreach (CartItem item in Cart.Items)
+                            {
+                                <MudStack Row Justify="Justify.SpaceBetween" Spacing="4" @key="item.Id">
+                                    <div><PizzaSummary Pizza="@item.Pizza" ShowQuantity /></div>
+                                    <MudText Class="money">@item.Pizza.LineTotal.ToCurrency()</MudText>
+                                </MudStack>
+                            }
+                            <MudDivider />
+                            @if (Quote is not null)
+                            {
+                                <OrderTotals Subtotal="@Quote.Subtotal" Tax="@Quote.Tax" DeliveryFee="@Quote.DeliveryFee" Total="@Quote.Total" />
+                            }
+                            else if (Quoting)
+                            {
+                                <MudProgressLinear Indeterminate />
+                            }
+                        </MudStack>
+                    </MudPaper>
+                    <MudStack Row Class="mt-4" Spacing="2">
+                        <MudButton Variant="Variant.Text" Color="Color.Default" Href="/cart" StartIcon="@Icons.Material.Filled.ArrowBack">Back to Cart</MudButton>
+                        <MudSpacer />
+                        <MudButton Variant="Variant.Filled" Color="Color.Success" Size="Size.Large" Disabled="@(!CanPlaceOrder)" OnClick="@PlaceOrderAsync">
+                            @if (Submitting)
+                            {
+                                <MudProgressCircular Indeterminate Size="Size.Small" Class="mr-2" />
+                            }
+                            @(Quote is null ? "Place Order" : $"Place Order · {Quote.Total.ToCurrency()}")
+                        </MudButton>
+                    </MudStack>
+                </MudItem>
+            </MudGrid>
+        }
+    </MudPaper>
+</MudContainer>

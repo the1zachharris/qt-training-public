@@ -1,0 +1,17 @@
+@* One pizza as text: name, then how it is built. Used by the cart, checkout, and confirmation. *@
+<MudText Typo="Typo.subtitle1" Style="font-weight: 500;">@Title</MudText>
+<MudText Typo="Typo.body2" Class="mud-text-secondary">@PizzaText.Build(Pizza)</MudText>
+<MudText Typo="Typo.body2" Class="mud-text-secondary">@PizzaText.Toppings(Pizza)</MudText>
+
+@code {
+    [Parameter, EditorRequired]
+    public PricedPizza Pizza { get; set; } = default!;
+
+    /// <summary>
+    /// Leads the name with the quantity ("2 × Pepperoni") where no separate quantity column exists.
+    /// </summary>
+    [Parameter]
+    public bool ShowQuantity { get; set; }
+
+    private string Title => ShowQuantity ? $"{Pizza.Quantity} × {Pizza.Name}" : Pizza.Name;
+}

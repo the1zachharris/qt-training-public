@@ -1,0 +1,32 @@
+[
+  {
+    "Name": "UI & API (Dev)",
+    "Projects": [
+      {
+        "Path": "QT.PizzaOrdering.API\\QT.PizzaOrdering.API.csproj",
+        "Action": "StartWithoutDebugging",
+        "DebugTarget": "https"
+      },
+      {
+        "Path": "QT.PizzaOrdering.UI\\QT.PizzaOrdering.UI.csproj",
+        "Action": "StartWithoutDebugging",
+        "DebugTarget": "https"
+      }
+    ]
+  },
+  {
+    "Name": "UI & API (Dev, Debug)",
+    "Projects": [
+      {
+        "Path": "QT.PizzaOrdering.API\\QT.PizzaOrdering.API.csproj",
+        "Action": "Start",
+        "DebugTarget": "https"
+      },
+      {
+        "Path": "QT.PizzaOrdering.UI\\QT.PizzaOrdering.UI.csproj",
+        "Action": "Start",
+        "DebugTarget": "https"
+      }
+    ]
+  }
+]

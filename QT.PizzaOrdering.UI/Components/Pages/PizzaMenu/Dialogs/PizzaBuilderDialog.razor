@@ -1,0 +1,82 @@
+<MudDialog>
+    <TitleContent>
+        <MudText Typo="Typo.h5">@MudDialog.Title</MudText>
+    </TitleContent>
+    <DialogContent>
+        <MudGrid Spacing="4">
+            <MudItem xs="12" sm="6">
+                <MudSelect T="int" @bind-Value="_sizeId" ToStringFunc="@SizeLabel" Label="Size" Variant="Variant.Outlined" Margin="Margin.Dense">
+                    @foreach (PizzaSize size in Menu.Sizes)
+                    {
+                        <MudSelectItem T="int" Value="@size.Id" />
+                    }
+                </MudSelect>
+            </MudItem>
+            <MudItem xs="12" sm="6">
+                <MudSelect T="int" @bind-Value="_crustId" ToStringFunc="@CrustLabel" Label="Crust" Variant="Variant.Outlined" Margin="Margin.Dense">
+                    @foreach (Crust crust in Menu.Crusts)
+                    {
+                        <MudSelectItem T="int" Value="@crust.Id" />
+                    }
+                </MudSelect>
+            </MudItem>
+            <MudItem xs="12" sm="6">
+                <MudSelect T="int" @bind-Value="_sauceId" ToStringFunc="@SauceLabel" Label="Sauce" Variant="Variant.Outlined" Margin="Margin.Dense">
+                    @foreach (Sauce sauce in Menu.Sauces)
+                    {
+                        <MudSelectItem T="int" Value="@sauce.Id" />
+                    }
+                </MudSelect>
+            </MudItem>
+            <MudItem xs="12" sm="6">
+                <MudSelect T="CheeseLevel" @bind-Value="_cheese" ToStringFunc="@CheeseLabel" Label="Cheese" Variant="Variant.Outlined" Margin="Margin.Dense">
+                    @foreach (CheeseLevel cheese in Enum.GetValues<CheeseLevel>())
+                    {
+                        <MudSelectItem T="CheeseLevel" Value="@cheese" />
+                    }
+                </MudSelect>
+            </MudItem>
+            <MudItem xs="12">
+                <MudStack Row AlignItems="AlignItems.Baseline" Spacing="2">
+                    <MudText Typo="Typo.subtitle1" Style="font-weight: 500;">Toppings</MudText>
+                    <MudText Typo="Typo.caption" Color="@(TooManyToppings ? Color.Error : Color.Default)">
+                        @($"{ToppingCount} of {PizzaPricer.MaxToppings} · {ToppingPrice.ToCurrency()} each")
+                    </MudText>
+                </MudStack>
+                <MudText Typo="Typo.overline">Meats</MudText>
+                <MudChipSet T="int" @bind-SelectedValues="_meatIds" SelectionMode="SelectionMode.MultiSelection" CheckMark Variant="Variant.Outlined" Color="Color.Primary">
+                    @foreach (Topping topping in ToppingsIn(ToppingCategory.Meat))
+                    {
+                        <MudChip T="int" Value="@topping.Id" Text="@topping.Name" />
+                    }
+                </MudChipSet>
+                <MudText Typo="Typo.overline" Class="mt-2">Veggies</MudText>
+                <MudChipSet T="int" @bind-SelectedValues="_veggieIds" SelectionMode="SelectionMode.MultiSelection" CheckMark Variant="Variant.Outlined" Color="Color.Primary">
+                    @foreach (Topping topping in ToppingsIn(ToppingCategory.Veggie))
+                    {
+                        <MudChip T="int" Value="@topping.Id" Text="@topping.Name" />
+                    }
+                </MudChipSet>
+            </MudItem>
+            <MudItem xs="12" sm="4">
+                <MudNumericField T="int" @bind-Value="_quantity" Label="Quantity" Min="1" Max="@PizzaPricer.MaxQuantity" Variant="Variant.Outlined" Margin="Margin.Dense" />
+            </MudItem>
+        </MudGrid>
+    </DialogContent>
+    <DialogActions>
+        <MudStack Spacing="0" Class="ml-4">
+            <MudText Typo="Typo.h6">@(Priced is null ? "—" : Priced.LineTotal.ToCurrency())</MudText>
+            @if (Priced is { Quantity: > 1 })
+            {
+                <MudText Typo="Typo.caption" Class="mud-text-secondary">@($"{Priced.UnitPrice.ToCurrency()} each")</MudText>
+            }
+            else if (TooManyToppings)
+            {
+                <MudText Typo="Typo.caption" Color="Color.Error">@($"Choose {PizzaPricer.MaxToppings} toppings or fewer.")</MudText>
+            }
+        </MudStack>
+        <MudSpacer />
+        <MudButton Color="Color.Dark" Variant="Variant.Filled" OnClick="@Cancel">Cancel</MudButton>
+        <MudButton Color="Color.Success" Variant="Variant.Filled" Disabled="@(Priced is null)" OnClick="@Confirm">@ConfirmText</MudButton>
+    </DialogActions>
+</MudDialog>

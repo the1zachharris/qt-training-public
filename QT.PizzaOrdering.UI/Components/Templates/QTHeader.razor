@@ -1,0 +1,33 @@
+<MudAppBar Class="app-bar" Fixed="true">
+    @if (DisplayNavMenuIcon)
+    {
+        <MudIconButton Icon="@Icons.Material.Filled.Menu" Size="Size.Large" Color="Color.Inherit" Edge="Edge.Start" OnClick="@OnMenuClick" Class="pl-4 pr-4" aria-label="Navigation menu" />
+    }
+    <MudIcon Icon="@Icons.Material.Filled.LocalPizza" Color="Color.Primary" Size="Size.Large" Class="ml-4 cursor-pointer" @onclick="OnHeaderLogoClick" />
+    <MudDivider Class="mx-2 my-3 ma-4" FlexItem="true" Vertical="true" />
+    <MudText Typo="Typo.h6">@AppTitle</MudText>
+    <MudSpacer />
+    @ContentSection
+</MudAppBar>
+
+@code {
+    [Parameter]
+    public string? AppTitle { get; set; }
+
+    [Parameter]
+    public RenderFragment? ContentSection { get; set; }
+
+    [Parameter]
+    public EventCallback<MouseEventArgs> OnMenuClick { get; set; }
+
+    [Parameter]
+    public bool DisplayNavMenuIcon { get; set; } = false;
+
+    [Inject]
+    public NavigationManager? NavigationManager { get; set; }
+
+    private void OnHeaderLogoClick()
+    {
+        NavigationManager?.NavigateTo("/");
+    }
+}

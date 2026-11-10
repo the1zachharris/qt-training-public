@@ -1,0 +1,78 @@
+@page "/cart"
+
+<PageTitle>Cart - Pizza Ordering</PageTitle>
+
+<MudContainer MaxWidth="MaxWidth.Large" Class="my-4">
+    <MudPaper Class="page-shell">
+        <MudStack Row AlignItems="AlignItems.Center" Spacing="2" Class="mb-3">
+            <MudText Typo="Typo.h5" Style="font-weight: bold;">Your Cart</MudText>
+            <MudSpacer />
+            @if (!Loading && !Cart.IsEmpty)
+            {
+                <MudButton Variant="Variant.Text" Color="Color.Default" StartIcon="@Icons.Material.Filled.DeleteSweep" OnClick="@Cart.ClearAsync">Empty Cart</MudButton>
+            }
+        </MudStack>
+        <StatusAlert Status="@Status" Class="mb-3" />
+        @if (Loading)
+        {
+            <MudProgressCircular Indeterminate Class="my-4" />
+        }
+        else if (Cart.IsEmpty)
+        {
+            <MudStack AlignItems="AlignItems.Center" Spacing="3" Class="my-12">
+                <MudIcon Icon="@Icons.Material.Outlined.ShoppingCart" Size="Size.Large" Class="mud-text-secondary" />
+                <MudText Typo="Typo.h6">Your cart is empty.</MudText>
+                <MudButton Variant="Variant.Filled" Color="Color.Primary" Href="/menu" StartIcon="@Icons.Material.Filled.LocalPizza">Browse the Menu</MudButton>
+            </MudStack>
+        }
+        else
+        {
+            <MudSimpleTable Elevation="0" Outlined>
+                <thead>
+                    <tr>
+                        <th>Pizza</th>
+                        <th>Quantity</th>
+                        <th class="money">Each</th>
+                        <th class="money">Total</th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (CartItem item in Cart.Items)
+                    {
+                        <tr @key="item.Id">
+                            <td><PizzaSummary Pizza="@item.Pizza" /></td>
+                            <td>
+                                <MudStack Row AlignItems="AlignItems.Center" Spacing="1">
+                                    <MudIconButton Icon="@Icons.Material.Filled.Remove" Size="Size.Small" Disabled="@(item.Pizza.Quantity <= 1)" OnClick="@(() => Cart.SetQuantityAsync(item.Id, item.Pizza.Quantity - 1))" aria-label="One fewer" />
+                                    <MudText Class="cart-quantity">@item.Pizza.Quantity</MudText>
+                                    <MudIconButton Icon="@Icons.Material.Filled.Add" Size="Size.Small" Disabled="@(item.Pizza.Quantity >= PizzaPricer.MaxQuantity)" OnClick="@(() => Cart.SetQuantityAsync(item.Id, item.Pizza.Quantity + 1))" aria-label="One more" />
+                                </MudStack>
+                            </td>
+                            <td class="money">@item.Pizza.UnitPrice.ToCurrency()</td>
+                            <td class="money">@item.Pizza.LineTotal.ToCurrency()</td>
+                            <td class="money">
+                                <MudTooltip Text="Change this pizza">
+                                    <MudIconButton Icon="@Icons.Material.Filled.Edit" Size="Size.Small" OnClick="@(() => EditAsync(item))" aria-label="Change this pizza" />
+                                </MudTooltip>
+                                <MudTooltip Text="Remove">
+                                    <MudIconButton Icon="@Icons.Material.Filled.Delete" Size="Size.Small" Color="Color.Error" OnClick="@(() => Cart.RemoveAsync(item.Id))" aria-label="Remove" />
+                                </MudTooltip>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </MudSimpleTable>
+
+            <MudStack Row AlignItems="AlignItems.Center" Spacing="4" Class="mt-4" Wrap="Wrap.Wrap">
+                <MudButton Variant="Variant.Text" Color="Color.Default" Href="/menu" StartIcon="@Icons.Material.Filled.ArrowBack">Add More Pizzas</MudButton>
+                <MudSpacer />
+                <MudStack AlignItems="AlignItems.End" Spacing="0">
+                    <MudText Typo="Typo.h6">@($"Subtotal {Cart.Subtotal.ToCurrency()}")</MudText>
+                    <MudText Typo="Typo.caption" Class="mud-text-secondary">Tax and any delivery fee are added at checkout.</MudText>
+                </MudStack>
+                <MudButton Variant="Variant.Filled" Color="Color.Success" Size="Size.Large" Href="/checkout" EndIcon="@Icons.Material.Filled.ArrowForward">Checkout</MudButton>
+            </MudStack>
+        }
+    </MudPaper>
+</MudContainer>

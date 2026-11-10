@@ -1,0 +1,63 @@
+<MudCard Outlined Elevation="0" Class="preset-card">
+    <MudCardHeader Class="pb-0">
+        <CardHeaderContent>
+            <MudText Typo="Typo.h6">@Preset.Name</MudText>
+        </CardHeaderContent>
+        <CardHeaderActions>
+            @if (IsVegetarian)
+            {
+                <MudChip T="string" Size="Size.Small" Color="Color.Success" Variant="Variant.Text" Icon="@Icons.Material.Filled.Spa">Vegetarian</MudChip>
+            }
+        </CardHeaderActions>
+    </MudCardHeader>
+    <MudCardContent>
+        <MudText Typo="Typo.body2">@Preset.Description</MudText>
+        <MudText Typo="Typo.caption" Class="mud-text-secondary">@Build</MudText>
+        <MudSelect T="int" Value="@_sizeId" ValueChanged="@OnSizeChanged" ToStringFunc="@SizeLabel" Label="Size" Variant="Variant.Outlined" Margin="Margin.Dense" Class="mt-4">
+            @foreach (PizzaSize size in Menu.Sizes)
+            {
+                <MudSelectItem T="int" Value="@size.Id" />
+            }
+        </MudSelect>
+    </MudCardContent>
+    <MudCardActions>
+        <MudText Typo="Typo.h6" Class="ml-2">@Price.ToCurrency()</MudText>
+        <MudSpacer />
+        <MudButton Variant="Variant.Text" Color="Color.Default" StartIcon="@Icons.Material.Filled.Tune" OnClick="@(() => OnCustomize.InvokeAsync(Selection))">Customize</MudButton>
+        <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.AddShoppingCart" Class="ml-2" OnClick="@(() => OnAdd.InvokeAsync(Selection))">Add</MudButton>
+    </MudCardActions>
+</MudCard>
+
+@code {
+    private int _sizeId;
+
+    [Parameter, EditorRequired] public MenuCatalog Menu { get; set; } = default!;
+    [Parameter, EditorRequired] public PresetPizza Preset { get; set; } = default!;
+
+    /// <summary>Add the preset as-is, in the size picked on the card.</summary>
+    [Parameter] public EventCallback<PizzaSelection> OnAdd { get; set; }
+
+    /// <summary>Open the builder starting from this preset, in the size picked on the card.</summary>
+    [Parameter] public EventCallback<PizzaSelection> OnCustomize { get; set; }
+
+    private PizzaSelection Selection => PizzaSelections.FromPreset(Preset, _sizeId);
+
+    private PricedPizza? Priced => PizzaPricer.Price(Menu, Selection) is { IsSuccess: true } result ? result.Value : null;
+
+    private decimal Price => Priced?.UnitPrice ?? 0m;
+
+    private string Build => Priced is { } pizza ? $"{pizza.Crust} · {pizza.Sauce} · {PizzaText.Cheese(pizza.Cheese)}" : string.Empty;
+
+    private bool IsVegetarian =>
+        Menu.Toppings.Where(topping => Preset.ToppingIds.Contains(topping.Id)).All(topping => topping.Category == ToppingCategory.Veggie);
+
+    protected override void OnInitialized()
+    {
+        _sizeId = PizzaSelections.DefaultSizeId(Menu);
+    }
+
+    private void OnSizeChanged(int sizeId) => _sizeId = sizeId;
+
+    private string SizeLabel(int sizeId) =>
+        Menu.Sizes.FirstOrDefault(size => size.Id == sizeId) is { } size ? $"{size.Name} ({size.Inches}\")" : string.Empty;
+}
