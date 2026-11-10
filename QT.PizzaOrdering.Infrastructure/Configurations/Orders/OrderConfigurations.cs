@@ -13,6 +13,8 @@ public sealed class OrderConfiguration : IEntityTypeConfiguration<Order>
         builder.HasKey(order => order.Id);
         builder.Property(order => order.Id).ValueGeneratedNever();
         builder.Property(order => order.CustomerName).HasMaxLength(100);
+        // The number customers and staff say out loud: no two orders may share one.
+        builder.HasIndex(order => order.OrderNumber).IsUnique();
         builder.Property(order => order.Status).HasConversion<string>().HasMaxLength(20);
         builder.HasMany(order => order.Lines)
             .WithOne()

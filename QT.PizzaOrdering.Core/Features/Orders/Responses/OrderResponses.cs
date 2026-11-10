@@ -37,3 +37,10 @@ public sealed record OrderDetails(
         [.. order.Lines.Select(line => line.ToPricedPizza())],
         order.Total);
 }
+
+/// <summary>
+/// What the kitchen screen shows: orders still to prepare, and orders waiting to be picked up.
+/// </summary>
+public sealed record KitchenOrders(
+    IReadOnlyList<OrderDetails> New,
+    IReadOnlyList<OrderDetails> Ready);

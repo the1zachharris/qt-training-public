@@ -75,6 +75,7 @@ try
     app.MapMethods("/", ["GET", "HEAD"], () => Results.Ok());
     app.MapMenuEndpoints("v1");
     app.MapOrderEndpoints("v1");
+    app.MapKitchenEndpoints("v1");
     await app.RunAsync();
 }
 catch (Exception ex) when (ex is not HostAbortedException)

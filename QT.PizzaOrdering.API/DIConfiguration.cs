@@ -49,5 +49,8 @@ public static class DIConfiguration
         builder.Services.AddScoped<IValidator<PlaceOrderRequest>, PlaceOrderRequestValidator>();
 
         builder.Services.AddScoped<GetOrderHandler>();
+
+        builder.Services.AddScoped<GetKitchenOrdersHandler>();
+        builder.Services.AddScoped<MarkOrderReadyHandler>();
     }
 }
