@@ -39,3 +39,10 @@ can you use playwright to test this application
 can you submit a pizza order with playwrite? use head mode so I can see it
 
 **Summary:** Started a temporary API and UI on the e2e ports with a throwaway database. A headed, slowed-down Playwright script in Edge then built a pizza, added a preset, checked out as "Playwright Demo" (order #1001, $52.00), and marked it Ready on the kitchen screen. The demo servers were stopped afterward. Only `prompt-log.md` changed; the demo script stayed in the session scratchpad.
+
+## 2026-11-10 15:10 · ZH-pass1
+
+**Prompt:**
+I am no longer seeing the kitchen screen why is that
+
+**Summary:** Found why: commit 190444b, a review fix, deliberately removed the Kitchen link from the navigation drawer (`CustomerNavigation.cs`, `MainLayout.razor`). The `/kitchen` page still exists and still works by its address. The headed demo's browser also closes itself after marking the order Ready. No code changed; only `prompt-log.md`.
