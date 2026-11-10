@@ -1,23 +1,24 @@
 <MudCard Outlined Elevation="0" Class="preset-card">
     <MudCardHeader Class="pb-0">
         <CardHeaderContent>
-            <MudText Typo="Typo.h6">@Preset.Name</MudText>
+            <MudText Typo="Typo.h6" HtmlTag="h3">@Preset.Name</MudText>
         </CardHeaderContent>
     </MudCardHeader>
     <MudCardContent>
         <MudText Typo="Typo.body2">@Preset.Description</MudText>
-        <MudRadioGroup T="int" Value="@_sizeId" ValueChanged="@OnSizeChanged" Class="mt-2">
+        <MudRadioGroup T="int" Value="@_sizeId" ValueChanged="@OnSizeChanged" Class="mt-2" aria-label="@($"{Preset.Name} size")">
             @foreach (PizzaSize size in Menu.Sizes)
             {
                 <MudRadio T="int" Value="@size.Id" Color="Color.Primary" Dense>@($"{size.Name} ({size.Inches}\")")</MudRadio>
             }
         </MudRadioGroup>
     </MudCardContent>
-    <MudCardActions>
-        <MudText Typo="Typo.h6" Class="ml-2">@Price.ToCurrency()</MudText>
+    @* Wraps (with space between rows only, so the default one-line layout is unchanged) so at 200% text or WCAG text spacing the price and buttons stack instead of overlapping (1.4.4 / 1.4.12). *@
+    <MudCardActions Class="flex-wrap" Style="row-gap: 8px;">
+        <MudText Typo="Typo.h6" HtmlTag="p" Class="ml-2 preset-price">@Price.ToCurrency()</MudText>
         <MudSpacer />
-        <MudButton Variant="Variant.Text" Color="Color.Default" OnClick="@(() => OnCustomize.InvokeAsync(Selection))">Customize</MudButton>
-        <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Add" Class="ml-2" OnClick="@(() => OnAdd.InvokeAsync(Selection))">Add</MudButton>
+        <MudButton Variant="Variant.Text" Color="Color.Default" OnClick="@(() => OnCustomize.InvokeAsync(Selection))" aria-label="@($"Customize {Preset.Name}")">Customize</MudButton>
+        <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Add" Class="ml-2" OnClick="@(() => OnAdd.InvokeAsync(Selection))" aria-label="@($"Add {Preset.Name}")">Add</MudButton>
     </MudCardActions>
 </MudCard>
 

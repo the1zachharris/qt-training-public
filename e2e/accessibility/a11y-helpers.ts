@@ -59,7 +59,7 @@ export async function setDarkMode(page: Page, dark: boolean): Promise<void> {
 /** Adds the first preset pizza to the cart and waits for the header badge to count it. */
 export async function addPreset(page: Page, times = 1): Promise<void> {
   for (let i = 0; i < times; i++) {
-    await page.getByRole('button', { name: 'Add', exact: true }).first().click();
+    await page.locator('.preset-card').first().getByRole('button', { name: /^Add / }).click();
     await expect(page.getByRole('link', { name: /Review Order \(\d+\)/ })).toContainText(`(${i + 1})`);
   }
 }

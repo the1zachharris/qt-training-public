@@ -2,7 +2,8 @@
 {
     <MudAlert Severity="@Status.Severity"
               ContentAlignment="HorizontalAlignment.Left"
-              Class="@Class">
+              Class="@Class"
+              role="@Role">
         @Status.Message
     </MudAlert>
 }
@@ -13,4 +14,8 @@
 
     [Parameter]
     public string? Class { get; set; }
+
+    // The alert is inserted only when there is something to say, so a live-region role on the new
+    // element is announced by screen readers (WCAG 4.1.3). Errors and warnings interrupt; the rest wait.
+    private string Role => Status?.Severity is Severity.Error or Severity.Warning ? "alert" : "status";
 }
