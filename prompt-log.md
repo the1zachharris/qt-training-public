@@ -46,3 +46,10 @@ can you submit a pizza order with playwrite? use head mode so I can see it
 I am no longer seeing the kitchen screen why is that
 
 **Summary:** Found why: commit 190444b, a review fix, deliberately removed the Kitchen link from the navigation drawer (`CustomerNavigation.cs`, `MainLayout.razor`). The `/kitchen` page still exists and still works by its address. The headed demo's browser also closes itself after marking the order Ready. No code changed; only `prompt-log.md`.
+
+## 2026-11-10 15:16 · ZH-pass1
+
+**Prompt:**
+Lets add it back so it is easy to test
+
+**Summary:** Put the Kitchen link back in the navigation drawer, and renamed `CustomerNavigation.cs` to `AppNavigation.cs` with a comment saying the link should go behind staff sign-in before real use. Updated `MainLayout.razor`. Updated the unit test in `CustomerFacingTextTests.cs` and added a Playwright test in `e2e/tests/kitchen.spec.ts` for the link. All 103 .NET tests and 12 Playwright tests pass.

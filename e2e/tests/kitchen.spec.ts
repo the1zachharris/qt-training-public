@@ -15,6 +15,14 @@ function kitchenCard(page: Page, customer: string) {
 }
 
 test.describe('4. Managing kitchen orders', () => {
+  test('the navigation menu links to the kitchen screen', async ({ page }) => {
+    await page.goto('/menu');
+    await page.getByRole('button', { name: 'Navigation menu' }).click();
+    await page.getByRole('link', { name: 'Kitchen' }).click();
+    await expect(page).toHaveURL(/\/kitchen$/);
+    await expect(page.getByText('Kitchen Orders')).toBeVisible();
+  });
+
   test('AC-3.3/4.1: a placed order shows in the kitchen with its details', async ({ page, browser }) => {
     const customer = uniqueName('Kitchen');
     const orderNumber = await placeOrder(page, customer);

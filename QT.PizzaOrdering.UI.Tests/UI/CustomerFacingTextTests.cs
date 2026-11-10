@@ -8,11 +8,10 @@ namespace QT.PizzaOrdering.UI.Tests.UI;
 public class CustomerFacingTextTests
 {
     [Fact]
-    public void CustomerNavigation_OffersTheMenuAndTheOrder_ButNotTheKitchen()
+    public void AppNavigation_OffersTheMenuTheOrderAndTheKitchen()
     {
-        // The kitchen screen shows every customer's name and can mark orders Ready, so it is
-        // reached by its address only and never offered to customers.
-        Assert.Equal(["/", "/cart"], CustomerNavigation.Items.Select(item => item.Href));
+        // The kitchen is listed so it is easy to reach while testing; see AppNavigation.
+        Assert.Equal(["/", "/cart", "/kitchen"], AppNavigation.Items.Select(item => item.Href));
     }
 
     [Fact]
