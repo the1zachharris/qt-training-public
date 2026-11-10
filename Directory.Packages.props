@@ -8,6 +8,7 @@
     <PackageVersion Include="Swashbuckle.AspNetCore" Version="10.3.0" />
   </ItemGroup>
   <ItemGroup Label="Entity Framework Core">
+    <PackageVersion Include="Microsoft.EntityFrameworkCore.Design" Version="10.0.13" />
     <PackageVersion Include="Microsoft.EntityFrameworkCore.Sqlite" Version="10.0.13" />
   </ItemGroup>
   <ItemGroup Label="Serilog">

@@ -1,3 +1,4 @@
+using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -7,7 +8,7 @@ using QT.PizzaOrdering.Infrastructure.Seeding;
 namespace QT.PizzaOrdering.Infrastructure;
 
 /// <summary>
-/// DbContext bootstrap for the API host: registration, plus creating and seeding the local database.
+/// DbContext bootstrap for the API host: registration, plus migrating and seeding the database.
 /// </summary>
 public static class DbContextRegistration
 {
@@ -17,15 +18,37 @@ public static class DbContextRegistration
     }
 
     /// <summary>
-    /// Creates the database if it does not exist and seeds the menu the first time. This app has no
-    /// migrations: the schema is created straight from the model, which suits a local SQLite file.
+    /// Makes a relative SQLite file path absolute against <paramref name="contentRootPath"/>.
+    /// SQLite resolves a relative path against the process's working directory, which differs
+    /// between Visual Studio, <c>dotnet run</c>, and the built executable; left alone, each way
+    /// of starting the app would open its own, separate set of orders. Absolute paths and
+    /// in-memory databases are returned unchanged.
+    /// </summary>
+    public static string ResolveSqliteConnectionString(string connectionString, string contentRootPath)
+    {
+        SqliteConnectionStringBuilder builder = new(connectionString);
+        bool isFile = !string.IsNullOrEmpty(builder.DataSource)
+            && !builder.DataSource.StartsWith(':')
+            && !builder.DataSource.StartsWith("file:", StringComparison.OrdinalIgnoreCase)
+            && builder.Mode != SqliteOpenMode.Memory;
+
+        if (!isFile || Path.IsPathRooted(builder.DataSource))
+            return connectionString;
+
+        builder.DataSource = Path.GetFullPath(builder.DataSource, contentRootPath);
+        return builder.ConnectionString;
+    }
+
+    /// <summary>
+    /// Brings the database up to the current schema and seeds the menu the first time. Migrations
+    /// change an existing database in place, so the shop's orders carry over when the app is updated.
     /// </summary>
     public static async Task InitializePizzaOrderingDatabaseAsync(this IServiceProvider services, CancellationToken ct = default)
     {
         await using AsyncServiceScope scope = services.CreateAsyncScope();
         PizzaOrderingDbContext dbContext = scope.ServiceProvider.GetRequiredService<PizzaOrderingDbContext>();
 
-        await dbContext.Database.EnsureCreatedAsync(ct);
+        await dbContext.Database.MigrateAsync(ct);
         if (await dbContext.Sizes.AnyAsync(ct))
             return;
 
