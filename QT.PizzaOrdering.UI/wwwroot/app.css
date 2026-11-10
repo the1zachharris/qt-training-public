@@ -149,3 +149,64 @@ h1:focus {
     flex-shrink: 0;
     white-space: nowrap;
 }
+
+/* ---------------------------------------------------------------------------------------------
+   Accessibility (WCAG 2.2 A/AA): layout and header.
+   --------------------------------------------------------------------------------------------- */
+
+/* 2.4.11 Focus Not Obscured: when focus moves to something under the fixed app bar, the browser
+   scrolls it clear of the bar instead of leaving it hidden behind it. */
+html {
+    scroll-padding-top: calc(var(--mud-appbar-height, 56px) + 16px);
+}
+
+/* 2.4.1 Bypass Blocks: "Skip to main content" sits above the app bar, out of sight until it has
+   keyboard focus. Moved off screen rather than clipped, so it never reads as clipped text. */
+.skip-link {
+    position: fixed;
+    top: 8px;
+    left: 8px;
+    z-index: calc(var(--mud-zindex-appbar, 1300) + 1);
+    padding: 8px 16px;
+    border-radius: 4px;
+    background-color: #FFFFFF;
+    color: #202126;
+    font-weight: 500;
+    text-decoration: underline;
+    transform: translateY(calc(-100% - 16px));
+}
+
+    .skip-link:focus {
+        transform: none;
+        outline: 2px solid #202126;
+        outline-offset: -5px;
+    }
+
+/* The main landmark takes focus from the skip link only (tabindex="-1"), like each page's h1. */
+#main-content:focus {
+    outline: none;
+}
+
+/* 2.1.1 Keyboard: the header logo is a link home; keep it lined up like the icon it wraps. */
+a.app-bar-logo {
+    display: inline-flex;
+    align-items: center;
+    color: inherit;
+    border-radius: 4px;
+}
+
+    /* 2.4.7 Focus Visible: a light ring that shows on the dark app bar. */
+    a.app-bar-logo:focus-visible {
+        outline: 2px solid var(--mud-palette-appbar-text);
+        outline-offset: 2px;
+    }
+
+/* 1.4.4 Resize Text: drawer links wrap inside the fixed-width drawer instead of being cut off. */
+.navigation-drawer .mud-nav-link {
+    white-space: normal;
+}
+
+    .navigation-drawer .mud-nav-link .mud-nav-link-text {
+        min-width: 0;
+        overflow-wrap: anywhere;
+    }
