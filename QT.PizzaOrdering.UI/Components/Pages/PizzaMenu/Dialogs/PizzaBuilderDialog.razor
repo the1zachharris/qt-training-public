@@ -1,12 +1,12 @@
 <MudDialog>
     <TitleContent>
-        <MudText Typo="Typo.h5">@MudDialog.Title</MudText>
+        <MudText Typo="Typo.h5" HtmlTag="h2">@MudDialog.Title</MudText>
     </TitleContent>
     <DialogContent>
         <MudStack Spacing="5">
             <div>
-                <MudText Typo="Typo.subtitle1" Style="font-weight: 500;">Size</MudText>
-                <MudRadioGroup T="int" @bind-Value="_sizeId">
+                <MudText Typo="Typo.subtitle1" Style="font-weight: 500;" id="pizza-builder-size-label">Size</MudText>
+                <MudRadioGroup T="int" @bind-Value="_sizeId" aria-labelledby="pizza-builder-size-label">
                     @foreach (PizzaSize size in Menu.Sizes)
                     {
                         <MudRadio T="int" Value="@size.Id" Color="Color.Primary">@($"{size.Name} ({size.Inches}\") - {size.Price.ToCurrency()}")</MudRadio>
@@ -14,9 +14,10 @@
                 </MudRadioGroup>
             </div>
             <div>
-                <MudText Typo="Typo.subtitle1" Style="font-weight: 500;">Toppings</MudText>
-                <MudText Typo="Typo.body2" Class="mud-text-secondary mb-1">Pick as many as you like, or none for a plain cheese pizza.</MudText>
-                <MudChipSet T="int" @bind-SelectedValues="_toppingIds" SelectionMode="SelectionMode.MultiSelection" CheckMark Variant="Variant.Outlined" Color="Color.Primary">
+                <MudText Typo="Typo.subtitle1" Style="font-weight: 500;" id="pizza-builder-toppings-label">Toppings</MudText>
+                <MudText Typo="Typo.body2" Class="mud-text-secondary mb-1" id="pizza-builder-toppings-hint">Pick as many as you like, or none for a plain cheese pizza.</MudText>
+                <MudChipSet T="int" @bind-SelectedValues="_toppingIds" SelectionMode="SelectionMode.MultiSelection" CheckMark Variant="Variant.Outlined" Color="Color.Primary"
+                             aria-labelledby="pizza-builder-toppings-label" aria-describedby="pizza-builder-toppings-hint">
                     @foreach (Topping topping in Menu.Toppings)
                     {
                         <MudChip T="int" Value="@topping.Id" Text="@($"{topping.Name} +{topping.Price.ToCurrency()}")" />
@@ -29,8 +30,8 @@
         </MudStack>
     </DialogContent>
     <DialogActions>
-        <MudStack Spacing="0" Class="ml-4">
-            <MudText Typo="Typo.h6">@(Priced is null ? "—" : Priced.LineTotal.ToCurrency())</MudText>
+        <MudStack Spacing="0" Class="ml-4" aria-live="polite" aria-atomic="true">
+            <MudText Typo="Typo.h6" HtmlTag="p" Class="builder-price">@(Priced is null ? "—" : Priced.LineTotal.ToCurrency())</MudText>
             @if (Priced is { Quantity: > 1 })
             {
                 <MudText Typo="Typo.caption" Class="mud-text-secondary">@($"{Priced.UnitPrice.ToCurrency()} each")</MudText>

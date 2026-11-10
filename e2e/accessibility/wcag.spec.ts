@@ -125,7 +125,7 @@ test.describe('2.1.1 Keyboard, 2.4.3 Focus Order', () => {
       await page.keyboard.press('Space');
       await page.waitForTimeout(200);
     }
-    log.priceAfterKeyboardChoices = await dialog.locator('.mud-dialog-actions h6').textContent();
+    log.priceAfterKeyboardChoices = await dialog.locator('.mud-dialog-actions .builder-price').textContent();
 
     const toAdd = await tabTo(page, /Add to Order/, 20);
     log.tabStopsToAddToOrder = toAdd.stops;
@@ -318,6 +318,9 @@ test.describe('1.4.10 Reflow, 1.4.4 Resize Text, 1.4.12 Text Spacing', () => {
 
   const clipProbe = () => {
     const clipped: string[] = [];
+    // A click leaves a MudBlazor ripple (a large circle meant to be clipped by its button) for about
+    // a second; it is an animation, not content, so take it out before measuring (as overflowProbe does).
+    for (const ripple of Array.from(document.querySelectorAll<HTMLElement>('.mud-ripple-effect'))) ripple.style.display = 'none';
     for (const el of Array.from(document.querySelectorAll<HTMLElement>('body *'))) {
       const style = getComputedStyle(el);
       if (style.display === 'none' || !el.textContent?.trim()) continue;
@@ -406,7 +409,7 @@ test.describe('4.1.2 Name, Role, Value; 1.3.1 Info and Relationships; 3.3 Input 
       const radios = Array.from(card.querySelectorAll('input[type=radio]')).map(r => (r as HTMLInputElement).name);
       return { title: card.querySelector('h6, h2, h3')?.textContent?.trim(), group: g ? (g.getAttribute('aria-label') ?? g.getAttribute('aria-labelledby')) : null, radioNames: Array.from(new Set(radios)) };
     }));
-    const buttons = await page.evaluate(() => Array.from(document.querySelectorAll('.preset-card button')).map(b => b.textContent?.trim()));
+    const buttons = await page.evaluate(() => Array.from(document.querySelectorAll('.preset-card button')).map(b => b.getAttribute('aria-label') ?? b.textContent?.trim()));
     record(testInfo, 'preset card semantics', { groups, buttons });
     expect.soft(groups.every(g => g.group), 'each preset size group is named').toBe(true);
     // Several "Add" and "Customize" buttons with identical names are ambiguous out of context (2.4.6 / 2.4.4 advisory).
@@ -426,7 +429,9 @@ test.describe('4.1.2 Name, Role, Value; 1.3.1 Info and Relationships; 3.3 Input 
     await page.waitForTimeout(300);
     const after = await name.evaluate((el: HTMLInputElement) => {
       const ids = (el.getAttribute('aria-describedby') ?? '').split(/\s+/).filter(Boolean);
-      const errorText = document.querySelector('.mud-input-helper-text.mud-input-error, .mud-input-error')?.textContent?.trim() ?? null;
+      // Prefer the helper-text line itself: a selector list matches in document order, and the outer
+      // .mud-input-control also carries .mud-input-error (its text is label + input + error).
+      const errorText = (document.querySelector('.mud-input-helper-text.mud-input-error') ?? document.querySelector('.mud-input-error'))?.textContent?.trim() ?? null;
       const errorEl = Array.from(document.querySelectorAll('.mud-input-helper-text')).find(e => e.textContent?.trim() === errorText) ?? null;
       const live = errorEl?.closest('[aria-live], [role=alert], [role=status]');
       return { ariaInvalid: el.getAttribute('aria-invalid'), describedByText: ids.map(id => document.getElementById(id)?.textContent?.trim()), errorText, errorInLiveRegion: !!live };
@@ -541,7 +546,7 @@ test.describe('4.1.3 Status Messages, 2.2.1 Timing, 1.4.13 Content on Hover or F
     const visibleMs = Date.now() - start;
     // Hovering should pause the timer so a slow reader can finish.
     await addPreset(page, 1).catch(() => {});
-    await page.getByRole('button', { name: 'Add', exact: true }).first().click();
+    await page.locator('.preset-card').first().getByRole('button', { name: /^Add / }).click();
     const toast2 = page.locator('.mud-snackbar').filter({ hasText: 'added to your order' }).first();
     await expect(toast2).toBeVisible();
     await toast2.hover();

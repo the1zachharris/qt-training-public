@@ -36,7 +36,7 @@ export async function toggleTopping(dialog: Locator, topping: string): Promise<v
 
 /** The live price shown in the builder's footer. */
 export function builderPrice(dialog: Locator): Locator {
-  return dialog.locator('.mud-dialog-actions h6');
+  return dialog.locator('.mud-dialog-actions .builder-price');
 }
 
 /** Builds a pizza in the dialog and adds it to the order. */

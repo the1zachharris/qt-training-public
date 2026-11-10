@@ -46,9 +46,9 @@ test.describe('1. Ordering a pizza', () => {
   test('a preset card shows its price for the chosen size', async ({ page }) => {
     await openMenu(page);
     const works = page.locator('.preset-card').filter({ hasText: 'The Works' });
-    await expect(works.locator('h6').last()).toHaveText('$18.00');
+    await expect(works.locator('.preset-price')).toHaveText('$18.00');
     await works.getByText('Large (14")').click();
-    await expect(works.locator('h6').last()).toHaveText('$22.00');
+    await expect(works.locator('.preset-price')).toHaveText('$22.00');
   });
 });
 
