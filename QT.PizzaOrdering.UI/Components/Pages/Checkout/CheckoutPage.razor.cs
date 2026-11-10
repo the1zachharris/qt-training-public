@@ -46,10 +46,9 @@ public partial class CheckoutPage
 
         if (result.IsFailure)
         {
-            // Say plainly that nothing was submitted, so the customer knows to try again or call.
             if (result.Error?.Errors?.TryGetValue(nameof(PlaceOrderRequest.CustomerName), out string[]? messages) == true)
                 NameError = string.Join(" ", messages);
-            Status = StatusMessage.Error($"Your order was not placed. {result.Error?.Message}");
+            Status = StatusMessage.Error(CheckoutMessages.OrderFailed(result.Error));
             Submitting = false;
             return;
         }

@@ -30,10 +30,9 @@ public static class DIConfiguration
             return;
         }
 
-        string connectionString = builder.Configuration.GetConnectionString(DatabaseConfiguration.ConnectionString)
-            ?? throw new InvalidOperationException($"Cannot find connection string '{DatabaseConfiguration.ConnectionString}' in appsettings.");
-        builder.Services.AddPizzaOrderingDbContext(
-            DbContextRegistration.ResolveSqliteConnectionString(connectionString, builder.Environment.ContentRootPath));
+        string connectionString = DatabaseConfiguration.BuildConnectionString(builder.Configuration);
+        DbContextRegistration.EnsureDatabaseFolderExists(connectionString);
+        builder.Services.AddPizzaOrderingDbContext(connectionString);
     }
 
     public static void AddMenuHandlers(this WebApplicationBuilder builder)

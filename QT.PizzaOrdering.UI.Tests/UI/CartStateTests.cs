@@ -146,14 +146,6 @@ public class CartStateTests
         Assert.True(cart.IsFull);
     }
 
-    [Fact]
-    public void SavedCart_UsesAKeyThePassOneBuildNeverWrote()
-    {
-        // The first version of the app saved carts under "Cart" in a different shape. Reading
-        // one of those into the current shape would show pizzas with no size or toppings.
-        Assert.Equal("Cart.v2", ProtectedSessionCartStorage.StorageKey);
-    }
-
     private sealed class FakeCartStorage : ICartStorage
     {
         public IReadOnlyList<CartItem>? Saved { get; set; }

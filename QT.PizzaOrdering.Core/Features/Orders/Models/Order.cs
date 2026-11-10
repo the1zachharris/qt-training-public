@@ -50,8 +50,8 @@ public sealed class Order
     }
 
     /// <summary>
-    /// Sets the order number. The repository may call this again with a different number when
-    /// another order claimed the first one before this order was saved.
+    /// Sets the order number. The repository calls this as it saves the order, with the next
+    /// number in sequence.
     /// </summary>
     public void AssignOrderNumber(int orderNumber)
     {

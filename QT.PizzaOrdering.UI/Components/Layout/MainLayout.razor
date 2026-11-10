@@ -35,12 +35,7 @@
     private const string AppName = "Neighborhood Pizza";
     private static LayoutProperties BaseLayoutProperties { get; } = new() { AppbarHeight = "56px", DrawerWidthLeft = "240px", DrawerWidthRight = "240px" };
 
-    private static readonly NavMenuItem[] NavItems =
-    [
-        new("/", "Menu", Icons.Material.Filled.LocalPizza, NavLinkMatch.All),
-        new("/cart", "Your Order", Icons.Material.Filled.ShoppingCart, NavLinkMatch.Prefix),
-        new("/kitchen", "Kitchen", Icons.Material.Filled.SoupKitchen, NavLinkMatch.Prefix)
-    ];
+    private static IReadOnlyList<NavMenuItem> NavItems => CustomerNavigation.Items;
 
     private bool ControlBarOpen { get; set; } = false;
     private bool IsDarkMode { get; set; }
@@ -62,8 +57,6 @@
             IsDarkMode = false;
         }
     }
-
-    private record NavMenuItem(string Href, string Text, string Icon, NavLinkMatch Match);
 
     private void OnCartChanged() => InvokeAsync(StateHasChanged);
 

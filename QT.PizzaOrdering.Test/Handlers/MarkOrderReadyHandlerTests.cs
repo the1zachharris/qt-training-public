@@ -64,6 +64,7 @@ public class MarkOrderReadyHandlerTests
         OrderDetails details = Assert.IsType<Ok<OrderDetails>>(response.Result).Value!;
         Assert.Equal(OrderStatus.Ready, details.Status);
         Assert.Equal(firstReadyTime, details.ReadyAt);
+        await _orderRepository.DidNotReceive().SaveChangesAsync(Arg.Any<CancellationToken>());
     }
 
     [Fact]

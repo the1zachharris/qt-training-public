@@ -18,3 +18,10 @@ Lets look at the pass-2 branch and the requirements.md file and make a plan in o
 Go ahead and implement this plan
 
 **Summary:** Implemented all six plan tasks in five commits: menu, prices, and orders now match `requirements.md` (two sizes, four $2.00 toppings, pickup only, name only, no tax or fees); added the kitchen API and `/kitchen` screen with New/Ready statuses; moved the database to EF Core migrations with a fixed file location. Changed files span `QT.PizzaOrdering.Core`, `.Infrastructure` (including new `Migrations/`), `.API`, `.UI`, `.Test`, and `.UI.Tests`. 91 tests pass and every acceptance criterion was checked in a browser against the running app, including after a restart. An independent review of the branch is in progress.
+
+## 2026-11-10 14:50 · ZH-pass1
+
+**Prompt:**
+(No new user prompt. This turn continued "Go ahead and implement this plan" when the independent branch review finished.)
+
+**Summary:** Made one fix pass on the review's important findings. The database now lives in a per-user application data folder (`DatabaseConfiguration.cs`, `DbContextRegistration.cs`, `DIConfiguration.cs`) so every way of launching the app opens the same orders; the Kitchen link was removed from the customer navigation (`CustomerNavigation.cs`, `MainLayout.razor`); checkout no longer claims an order "was not placed" when the outcome is unknown (`CheckoutMessages.cs`, `CheckoutPage.razor.cs`). Added real tests for cart storage, database location, navigation, and checkout messages; 103 tests pass.
