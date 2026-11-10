@@ -327,6 +327,8 @@ test.describe('Kitchen', () => {
       await checkout(page, name);
     }
     await page.goto('/kitchen');
+    // The board loads over the Blazor circuit after the page appears; read the cards only once both orders are on it.
+    await expect(page.locator('.kitchen-card', { hasText: second })).toBeVisible();
     const names = await page.locator('.kitchen-card').allTextContents();
     const i1 = names.findIndex(t => t.includes(first));
     const i2 = names.findIndex(t => t.includes(second));

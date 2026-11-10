@@ -36,3 +36,11 @@ up in [`docs/test-reports/2026-11-10-playwright-test-report.md`](../docs/test-re
 ```bash
 npx playwright test -c playwright.exploratory.config.ts
 ```
+
+## Accessibility suite (WCAG 2.2 A/AA)
+
+`accessibility/` checks every screen against WCAG 2.2 Level A and AA. It runs axe-core (`@axe-core/playwright`) plus targeted checks for keyboard use, visible focus, reflow, text spacing, contrast, and status messages. It runs on ports 5319 / 5376; set `A11Y_API_PORT` and `A11Y_UI_PORT` to change them. Findings are in [`docs/test-reports/2026-11-10-wcag-2.2-accessibility-report.md`](../docs/test-reports/2026-11-10-wcag-2.2-accessibility-report.md).
+
+```bash
+npx playwright test -c playwright.accessibility.config.ts
+```
