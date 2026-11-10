@@ -16,4 +16,10 @@ public interface IPizzaOrderingHttpClient
     Task<ClientResult<OrderDetails>> PlaceOrderAsync(PlaceOrderRequest request, CancellationToken ct = default);
 
     Task<ClientResult<OrderDetails>> GetOrderAsync(Guid orderId, CancellationToken ct = default);
+
+    /// <summary>The kitchen's orders: New (oldest first) and recent Ready (newest first).</summary>
+    Task<ClientResult<KitchenOrders>> GetKitchenOrdersAsync(CancellationToken ct = default);
+
+    /// <summary>Marks an order Ready. Succeeds without change when the order is already Ready.</summary>
+    Task<ClientResult<OrderDetails>> MarkOrderReadyAsync(Guid orderId, CancellationToken ct = default);
 }

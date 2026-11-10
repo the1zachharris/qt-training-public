@@ -1,0 +1,57 @@
+@page "/kitchen"
+
+<PageTitle>Kitchen - Neighborhood Pizza</PageTitle>
+
+<MudContainer MaxWidth="MaxWidth.ExtraLarge" Class="my-4">
+    <MudPaper Class="page-shell">
+        <MudStack Row AlignItems="AlignItems.Center" Spacing="2" Class="mb-3">
+            <MudText Typo="Typo.h5" Style="font-weight: bold;">Kitchen Orders</MudText>
+            <MudSpacer />
+            @if (LastUpdated is { } updated)
+            {
+                <MudText Typo="Typo.caption" Class="mud-text-secondary">@($"Updated {updated:h:mm:ss tt}")</MudText>
+            }
+            <MudButton Variant="Variant.Text" Color="Color.Default" StartIcon="@Icons.Material.Filled.Refresh" Disabled="@Refreshing" OnClick="@RefreshAsync">Refresh</MudButton>
+        </MudStack>
+        <StatusAlert Status="@RefreshProblem" Class="mb-3" />
+        <StatusAlert Status="@ActionProblem" Class="mb-3" />
+        @if (Orders is null)
+        {
+            @if (Loading)
+            {
+                <MudProgressCircular Indeterminate Class="my-4" />
+            }
+        }
+        else
+        {
+            <MudGrid Spacing="6">
+                <MudItem xs="12" md="7">
+                    <MudText Typo="Typo.h6" Class="mb-3">@($"New ({Orders.New.Count})")</MudText>
+                    @if (Orders.New.Count == 0)
+                    {
+                        <MudText Class="mud-text-secondary">No orders waiting.</MudText>
+                    }
+                    <MudStack Spacing="3">
+                        @foreach (OrderDetails order in Orders.New)
+                        {
+                            <KitchenOrderCard @key="order.Id" Order="@order" Busy="@IsMarking(order.Id)" OnMarkReady="@MarkReadyAsync" />
+                        }
+                    </MudStack>
+                </MudItem>
+                <MudItem xs="12" md="5">
+                    <MudText Typo="Typo.h6" Class="mb-3">@($"Ready ({Orders.Ready.Count})")</MudText>
+                    @if (Orders.Ready.Count == 0)
+                    {
+                        <MudText Class="mud-text-secondary">Nothing ready yet.</MudText>
+                    }
+                    <MudStack Spacing="3">
+                        @foreach (OrderDetails order in Orders.Ready)
+                        {
+                            <KitchenOrderCard @key="order.Id" Order="@order" />
+                        }
+                    </MudStack>
+                </MudItem>
+            </MudGrid>
+        }
+    </MudPaper>
+</MudContainer>

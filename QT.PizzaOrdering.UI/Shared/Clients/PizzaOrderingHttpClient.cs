@@ -29,6 +29,7 @@ public sealed partial class PizzaOrderingHttpClient(ILogger<PizzaOrderingHttpCli
 
         public const string Menu = $"{Base}/menu";
         public const string Orders = $"{Base}/orders";
+        public const string KitchenOrders = $"{Base}/kitchen/orders";
     }
 
     public Task<ClientResult<MenuCatalog>> GetMenuAsync(CancellationToken ct = default) =>
@@ -39,6 +40,12 @@ public sealed partial class PizzaOrderingHttpClient(ILogger<PizzaOrderingHttpCli
 
     public Task<ClientResult<OrderDetails>> GetOrderAsync(Guid orderId, CancellationToken ct = default) =>
         SendAsync<OrderDetails>(nameof(GetOrderAsync), () => _http.GetAsync($"{Endpoints.Orders}/{orderId}", ct), ct);
+
+    public Task<ClientResult<KitchenOrders>> GetKitchenOrdersAsync(CancellationToken ct = default) =>
+        SendAsync<KitchenOrders>(nameof(GetKitchenOrdersAsync), () => _http.GetAsync(Endpoints.KitchenOrders, ct), ct);
+
+    public Task<ClientResult<OrderDetails>> MarkOrderReadyAsync(Guid orderId, CancellationToken ct = default) =>
+        SendAsync<OrderDetails>(nameof(MarkOrderReadyAsync), () => _http.PatchAsync($"{Endpoints.KitchenOrders}/{orderId}/ready", content: null, ct), ct);
 
     /// <summary>
     /// Sends one request and turns every outcome into a <see cref="ClientResult{T}"/>: the body on

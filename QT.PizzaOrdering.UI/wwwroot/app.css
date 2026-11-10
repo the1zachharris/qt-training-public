@@ -51,3 +51,12 @@ h1:focus {
     white-space: nowrap;
     font-variant-numeric: tabular-nums;
 }
+
+/* Kitchen cards: the colored edge tells New from Ready at a glance across the room. */
+.kitchen-card {
+    border-left: 6px solid var(--mud-palette-primary);
+}
+
+    .kitchen-card.kitchen-card-ready {
+        border-left-color: var(--mud-palette-success);
+    }

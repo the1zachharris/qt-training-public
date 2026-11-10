@@ -6,6 +6,7 @@ using MudBlazor.Services;
 
 using QT.PizzaOrdering.UI.Components;
 using QT.PizzaOrdering.UI.Shared;
+using QT.PizzaOrdering.UI.Shared.Configs;
 using QT.PizzaOrdering.UI.Shared.ShoppingCart;
 
 using Serilog;
@@ -43,6 +44,7 @@ try
     builder.Services.AddScoped<ProtectedSessionStorage>();
     builder.Services.AddScoped<ICartStorage, ProtectedSessionCartStorage>();
     builder.Services.AddScoped<CartState>();
+    builder.Services.AddOptions<KitchenConfig>().Bind(builder.Configuration.GetSection(KitchenConfig.SectionName)).ValidateDataAnnotations().ValidateOnStart();
     builder.Services.AddHttpClient<IPizzaOrderingHttpClient, PizzaOrderingHttpClient>(client =>
     {
         client.BaseAddress = new Uri(

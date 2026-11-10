@@ -130,6 +130,50 @@ public class PizzaOrderingHttpClientTests
         Assert.Equal("Connection refused", result.Error!.Message);
     }
 
+    [Fact]
+    public async Task GetKitchenOrdersAsync_ReadsNewAndReadyOrders()
+    {
+        string readyOrder = OrderJson
+            .Replace("\"orderNumber\": 1001", "\"orderNumber\": 1000")
+            .Replace("\"status\": \"New\", \"readyAt\": null", "\"status\": \"Ready\", \"readyAt\": \"2026-11-10T18:50:00+00:00\"");
+        PizzaOrderingHttpClient client = ClientReturning(HttpStatusCode.OK, $$"""{ "new": [ {{OrderJson}} ], "ready": [ {{readyOrder}} ] }""");
+
+        ClientResult<KitchenOrders> result = await client.GetKitchenOrdersAsync(TestContext.Current.CancellationToken);
+
+        Assert.Equal(HttpMethod.Get, _request!.Method);
+        Assert.Equal("/api/v1/kitchen/orders", _request.RequestUri!.AbsolutePath);
+        OrderDetails newOrder = Assert.Single(result.Data!.New);
+        Assert.Equal((1001, "Pat Sample", OrderStatus.New, 32.00m), (newOrder.OrderNumber, newOrder.CustomerName, newOrder.Status, newOrder.Total));
+        OrderDetails ready = Assert.Single(result.Data.Ready);
+        Assert.Equal(OrderStatus.Ready, ready.Status);
+        Assert.NotNull(ready.ReadyAt);
+    }
+
+    [Fact]
+    public async Task MarkOrderReadyAsync_PatchesTheOrdersReadyRoute()
+    {
+        Guid orderId = Guid.Parse("3f2a6c1e-0d4b-4a57-9d1c-6f0e2b7a8c11");
+        PizzaOrderingHttpClient client = ClientReturning(HttpStatusCode.OK, OrderJson.Replace("\"status\": \"New\"", "\"status\": \"Ready\""));
+
+        ClientResult<OrderDetails> result = await client.MarkOrderReadyAsync(orderId, TestContext.Current.CancellationToken);
+
+        Assert.Equal(HttpMethod.Patch, _request!.Method);
+        Assert.Equal($"/api/v1/kitchen/orders/{orderId}/ready", _request.RequestUri!.AbsolutePath);
+        Assert.Equal(OrderStatus.Ready, result.Data!.Status);
+    }
+
+    [Fact]
+    public async Task MarkOrderReadyAsync_WhenTheOrderIsGone_ReturnsNotFound()
+    {
+        const string json = """{ "title": "OrderNotFound", "status": 404, "detail": "Order with id 'abc' was not found." }""";
+        PizzaOrderingHttpClient client = ClientReturning(HttpStatusCode.NotFound, json);
+
+        ClientResult<OrderDetails> result = await client.MarkOrderReadyAsync(Guid.NewGuid(), TestContext.Current.CancellationToken);
+
+        Assert.True(result.IsFailure);
+        Assert.Equal(HttpStatusCode.NotFound, result.Error!.Status);
+    }
+
     private sealed class StubHandler(Func<HttpRequestMessage, HttpResponseMessage> respond) : HttpMessageHandler
     {
         protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken) =>

@@ -1,0 +1,43 @@
+<MudCard Outlined Elevation="0" Class="@($"kitchen-card{(IsReady ? " kitchen-card-ready" : string.Empty)}")">
+    <MudCardContent>
+        <MudStack Row AlignItems="AlignItems.Start" Spacing="3">
+            <MudStack Spacing="0">
+                <MudText Typo="Typo.h5" Style="font-weight: bold;">@PizzaText.OrderNumber(Order.OrderNumber)</MudText>
+                <MudText Typo="Typo.subtitle1">@Order.CustomerName</MudText>
+            </MudStack>
+            <MudSpacer />
+            <MudStack Spacing="0" AlignItems="AlignItems.End">
+                <MudChip T="string" Size="Size.Small" Color="@(IsReady ? Color.Success : Color.Primary)" Variant="Variant.Filled">@Order.Status</MudChip>
+                <MudText Typo="Typo.caption" Class="mud-text-secondary">@TimeText</MudText>
+            </MudStack>
+        </MudStack>
+        <MudDivider Class="my-2" />
+        @foreach (PricedPizza pizza in Order.Pizzas)
+        {
+            <MudText Typo="Typo.body1">@($"{pizza.Quantity} × {PizzaText.Details(pizza)}")</MudText>
+        }
+        <MudStack Row AlignItems="AlignItems.Center" Class="mt-3">
+            <MudText Typo="Typo.subtitle1" Style="font-weight: 500;">@($"Total {Order.Total.ToCurrency()}")</MudText>
+            <MudSpacer />
+            @if (!IsReady)
+            {
+                <MudButton Variant="Variant.Filled" Color="Color.Success" StartIcon="@Icons.Material.Filled.Check" Disabled="@Busy" OnClick="@(() => OnMarkReady.InvokeAsync(Order))">Mark Ready</MudButton>
+            }
+        </MudStack>
+    </MudCardContent>
+</MudCard>
+
+@code {
+    [Parameter, EditorRequired] public OrderDetails Order { get; set; } = default!;
+
+    /// <summary>True while a Mark Ready request for this order is in flight.</summary>
+    [Parameter] public bool Busy { get; set; }
+
+    [Parameter] public EventCallback<OrderDetails> OnMarkReady { get; set; }
+
+    private bool IsReady => Order.Status == OrderStatus.Ready;
+
+    private string TimeText => IsReady && Order.ReadyAt is { } readyAt
+        ? $"Ready {readyAt.ToLocalTime():h:mm tt}"
+        : $"Placed {Order.PlacedAt.ToLocalTime():h:mm tt}";
+}

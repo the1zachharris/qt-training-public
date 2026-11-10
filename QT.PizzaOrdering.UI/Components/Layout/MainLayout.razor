@@ -38,7 +38,8 @@
     private static readonly NavMenuItem[] NavItems =
     [
         new("/", "Menu", Icons.Material.Filled.LocalPizza, NavLinkMatch.All),
-        new("/cart", "Cart", Icons.Material.Filled.ShoppingCart, NavLinkMatch.Prefix)
+        new("/cart", "Your Order", Icons.Material.Filled.ShoppingCart, NavLinkMatch.Prefix),
+        new("/kitchen", "Kitchen", Icons.Material.Filled.SoupKitchen, NavLinkMatch.Prefix)
     ];
 
     private bool ControlBarOpen { get; set; } = false;
