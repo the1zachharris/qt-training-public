@@ -1,7 +1,6 @@
-@* One pizza as text: name, then how it is built. Used by the cart, checkout, and confirmation. *@
+@* One pizza as text: name, then its size and toppings. Used by the cart, checkout, confirmation, and kitchen. *@
 <MudText Typo="Typo.subtitle1" Style="font-weight: 500;">@Title</MudText>
-<MudText Typo="Typo.body2" Class="mud-text-secondary">@PizzaText.Build(Pizza)</MudText>
-<MudText Typo="Typo.body2" Class="mud-text-secondary">@PizzaText.Toppings(Pizza)</MudText>
+<MudText Typo="Typo.body2" Class="mud-text-secondary">@PizzaText.Details(Pizza)</MudText>
 
 @code {
     [Parameter, EditorRequired]

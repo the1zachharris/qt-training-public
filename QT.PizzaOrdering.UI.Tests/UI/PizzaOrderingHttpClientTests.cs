@@ -3,7 +3,6 @@ using System.Text;
 
 using Microsoft.Extensions.Logging.Abstractions;
 
-using QT.PizzaOrdering.Core.Features.Menu.Enums;
 using QT.PizzaOrdering.Core.Features.Menu.Models;
 using QT.PizzaOrdering.Core.Features.Orders.Enums;
 using QT.PizzaOrdering.Core.Features.Orders.Requests;
@@ -15,11 +14,22 @@ namespace QT.PizzaOrdering.UI.Tests.UI;
 
 public class PizzaOrderingHttpClientTests
 {
-    private static PizzaOrderingHttpClient ClientReturning(HttpStatusCode status, string? json, Action<HttpRequestMessage>? inspect = null)
+    private const string OrderJson = """
+        {
+          "id": "3f2a6c1e-0d4b-4a57-9d1c-6f0e2b7a8c11", "orderNumber": 1001, "customerName": "Pat Sample",
+          "placedAt": "2026-11-10T18:30:00+00:00", "status": "New", "readyAt": null,
+          "pizzas": [ { "name": "Build Your Own", "size": "Large (14\")", "toppings": [ "Pepperoni" ], "quantity": 2, "unitPrice": 16.00, "lineTotal": 32.00 } ],
+          "total": 32.00
+        }
+        """;
+
+    private HttpRequestMessage? _request;
+
+    private PizzaOrderingHttpClient ClientReturning(HttpStatusCode status, string? json)
     {
         StubHandler handler = new(request =>
         {
-            inspect?.Invoke(request);
+            _request = request;
             HttpResponseMessage response = new(status);
             if (json is not null)
                 response.Content = new StringContent(json, Encoding.UTF8, "application/json");
@@ -34,22 +44,35 @@ public class PizzaOrderingHttpClientTests
     {
         const string json = """
             {
-              "sizes": [ { "id": 2, "name": "Medium", "inches": 12, "basePrice": 12.99, "toppingPrice": 1.50 } ],
-              "crusts": [ { "id": 1, "name": "Hand Tossed", "upcharge": 0 } ],
-              "sauces": [ { "id": 1, "name": "Classic Marinara" } ],
-              "toppings": [ { "id": 1, "name": "Pepperoni", "category": "Meat" } ],
-              "presetPizzas": [ { "id": 2, "name": "Pepperoni", "description": "x", "crustId": 1, "sauceId": 1, "cheese": "Regular", "toppingIds": [ 1 ] } ]
+              "sizes": [ { "id": 1, "name": "Small", "inches": 10, "price": 10.00 }, { "id": 2, "name": "Large", "inches": 14, "price": 14.00 } ],
+              "toppings": [ { "id": 1, "name": "Pepperoni", "price": 2.00 } ],
+              "presetPizzas": [ { "id": 2, "name": "Pepperoni", "description": "x", "toppingIds": [ 1 ] } ]
             }
             """;
-        string? requestedPath = null;
-        PizzaOrderingHttpClient client = ClientReturning(HttpStatusCode.OK, json, request => requestedPath = request.RequestUri?.AbsolutePath);
+        PizzaOrderingHttpClient client = ClientReturning(HttpStatusCode.OK, json);
 
         ClientResult<MenuCatalog> result = await client.GetMenuAsync(TestContext.Current.CancellationToken);
 
         Assert.True(result.IsSuccess);
-        Assert.Equal("/api/v1/menu", requestedPath);
-        Assert.Equal(ToppingCategory.Meat, Assert.Single(result.Data!.Toppings).Category);
-        Assert.Equal(CheeseLevel.Regular, Assert.Single(result.Data.PresetPizzas).Cheese);
+        Assert.Equal("/api/v1/menu", _request!.RequestUri!.AbsolutePath);
+        Assert.Equal([10.00m, 14.00m], result.Data!.Sizes.Select(size => size.Price));
+        Assert.Equal(2.00m, Assert.Single(result.Data.Toppings).Price);
+        Assert.Equal([1], Assert.Single(result.Data.PresetPizzas).ToppingIds);
+    }
+
+    [Fact]
+    public async Task PlaceOrderAsync_WhenOk_ReturnsTheOrderWithItsNumberAndStatus()
+    {
+        PizzaOrderingHttpClient client = ClientReturning(HttpStatusCode.OK, OrderJson);
+
+        ClientResult<OrderDetails> result = await client.PlaceOrderAsync(
+            new PlaceOrderRequest("Pat Sample", [new PizzaSelection(null, 2, [1], 2)]), TestContext.Current.CancellationToken);
+
+        Assert.Equal(HttpMethod.Post, _request!.Method);
+        Assert.Equal("/api/v1/orders", _request.RequestUri!.AbsolutePath);
+        Assert.Equal(1001, result.Data!.OrderNumber);
+        Assert.Equal(OrderStatus.New, result.Data.Status);
+        Assert.Equal(32.00m, result.Data.Total);
     }
 
     [Fact]
@@ -59,18 +82,17 @@ public class PizzaOrderingHttpClientTests
             {
               "title": "One or more validation errors occurred.",
               "status": 400,
-              "errors": { "CustomerName": [ "Name is required." ], "Phone": [ "Phone number is required." ] }
+              "errors": { "CustomerName": [ "A name is required to place an order." ] }
             }
             """;
         PizzaOrderingHttpClient client = ClientReturning(HttpStatusCode.BadRequest, json);
-        PlaceOrderRequest request = new("", "", FulfillmentType.Pickup, null, null, []);
 
-        ClientResult<OrderConfirmation> result = await client.PlaceOrderAsync(request, TestContext.Current.CancellationToken);
+        ClientResult<OrderDetails> result = await client.PlaceOrderAsync(new PlaceOrderRequest("", []), TestContext.Current.CancellationToken);
 
         Assert.True(result.IsFailure);
         Assert.Equal(HttpStatusCode.BadRequest, result.Error!.Status);
-        Assert.Equal("Name is required. Phone number is required.", result.Error.Message);
-        Assert.Equal(["Name is required."], result.Error.Errors!["CustomerName"]);
+        Assert.Equal("A name is required to place an order.", result.Error.Message);
+        Assert.Equal(["A name is required to place an order."], result.Error.Errors!["CustomerName"]);
     }
 
     [Fact]
@@ -79,18 +101,18 @@ public class PizzaOrderingHttpClientTests
         const string json = """{ "title": "OrderNotFound", "status": 404, "detail": "Order with id 'abc' was not found." }""";
         PizzaOrderingHttpClient client = ClientReturning(HttpStatusCode.NotFound, json);
 
-        ClientResult<OrderConfirmation> result = await client.GetOrderAsync(Guid.NewGuid(), TestContext.Current.CancellationToken);
+        ClientResult<OrderDetails> result = await client.GetOrderAsync(Guid.NewGuid(), TestContext.Current.CancellationToken);
 
         Assert.Equal(HttpStatusCode.NotFound, result.Error!.Status);
         Assert.Equal("Order with id 'abc' was not found.", result.Error.Message);
     }
 
     [Fact]
-    public async Task QuoteOrderAsync_WhenFailureHasNoBody_FallsBackToTheStatusLine()
+    public async Task GetMenuAsync_WhenFailureHasNoBody_FallsBackToTheStatusLine()
     {
         PizzaOrderingHttpClient client = ClientReturning(HttpStatusCode.ServiceUnavailable, json: null);
 
-        ClientResult<OrderQuote> result = await client.QuoteOrderAsync(new QuoteOrderRequest(FulfillmentType.Pickup, []), TestContext.Current.CancellationToken);
+        ClientResult<MenuCatalog> result = await client.GetMenuAsync(TestContext.Current.CancellationToken);
 
         Assert.True(result.IsFailure);
         Assert.Contains("503", result.Error!.Message);

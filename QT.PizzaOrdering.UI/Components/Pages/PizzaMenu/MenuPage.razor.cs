@@ -20,7 +20,13 @@ public partial class MenuPage : IDisposable
     private bool Loading { get; set; } = true;
     private StatusMessage? Status { get; set; }
 
-    private decimal StartingPrice => Menu is { Sizes.Count: > 0 } ? Menu.Sizes.Min(size => size.BasePrice) : 0m;
+    /// <summary>The whole menu on one line: every size with its price, then every topping with its price.</summary>
+    private string PriceList =>
+        Menu is null
+            ? string.Empty
+            : string.Join(" · ", [
+                .. Menu.Sizes.Select(size => $"{size.Name} ({size.Inches}\") {size.Price.ToCurrency()}"),
+                .. Menu.Toppings.GroupBy(topping => topping.Price).Select(group => $"{string.Join(", ", group.Select(topping => topping.Name))} +{group.Key.ToCurrency()} each")]);
 
     protected override async Task OnInitializedAsync()
     {
@@ -46,7 +52,7 @@ public partial class MenuPage : IDisposable
         if (Menu is null)
             return;
 
-        PizzaSelection? built = await PizzaBuilderDialog.ShowAsync(DialogService, Menu, start, title, "Add to Cart");
+        PizzaSelection? built = await PizzaBuilderDialog.ShowAsync(DialogService, Menu, start, title, "Add to Order");
         if (built is not null)
             await AddToCartAsync(built);
     }
@@ -58,7 +64,7 @@ public partial class MenuPage : IDisposable
 
         if (Cart.IsFull)
         {
-            Snackbar.Add($"Your cart already has {OrderPricer.MaxPizzaLines} different pizzas. Remove one to add another.", Severity.Warning);
+            Snackbar.Add($"Your order already has {OrderPricer.MaxPizzaLines} different pizzas. Remove one to add another.", Severity.Warning);
             return;
         }
 
@@ -70,7 +76,7 @@ public partial class MenuPage : IDisposable
         }
 
         await Cart.AddAsync(selection, priced.Value);
-        Snackbar.Add($"{priced.Value.Quantity} × {priced.Value.Name} added to your cart.", Severity.Success);
+        Snackbar.Add($"{priced.Value.Quantity} × {priced.Value.Name} added to your order.", Severity.Success);
     }
 
     private void OnCartChanged() => InvokeAsync(StateHasChanged);

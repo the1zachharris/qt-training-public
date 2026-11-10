@@ -3,28 +3,21 @@
         <CardHeaderContent>
             <MudText Typo="Typo.h6">@Preset.Name</MudText>
         </CardHeaderContent>
-        <CardHeaderActions>
-            @if (IsVegetarian)
-            {
-                <MudChip T="string" Size="Size.Small" Color="Color.Success" Variant="Variant.Text" Icon="@Icons.Material.Filled.Spa">Vegetarian</MudChip>
-            }
-        </CardHeaderActions>
     </MudCardHeader>
     <MudCardContent>
         <MudText Typo="Typo.body2">@Preset.Description</MudText>
-        <MudText Typo="Typo.caption" Class="mud-text-secondary">@Build</MudText>
-        <MudSelect T="int" Value="@_sizeId" ValueChanged="@OnSizeChanged" ToStringFunc="@SizeLabel" Label="Size" Variant="Variant.Outlined" Margin="Margin.Dense" Class="mt-4">
+        <MudRadioGroup T="int" Value="@_sizeId" ValueChanged="@OnSizeChanged" Class="mt-2">
             @foreach (PizzaSize size in Menu.Sizes)
             {
-                <MudSelectItem T="int" Value="@size.Id" />
+                <MudRadio T="int" Value="@size.Id" Color="Color.Primary" Dense>@($"{size.Name} ({size.Inches}\")")</MudRadio>
             }
-        </MudSelect>
+        </MudRadioGroup>
     </MudCardContent>
     <MudCardActions>
         <MudText Typo="Typo.h6" Class="ml-2">@Price.ToCurrency()</MudText>
         <MudSpacer />
-        <MudButton Variant="Variant.Text" Color="Color.Default" StartIcon="@Icons.Material.Filled.Tune" OnClick="@(() => OnCustomize.InvokeAsync(Selection))">Customize</MudButton>
-        <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.AddShoppingCart" Class="ml-2" OnClick="@(() => OnAdd.InvokeAsync(Selection))">Add</MudButton>
+        <MudButton Variant="Variant.Text" Color="Color.Default" OnClick="@(() => OnCustomize.InvokeAsync(Selection))">Customize</MudButton>
+        <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Add" Class="ml-2" OnClick="@(() => OnAdd.InvokeAsync(Selection))">Add</MudButton>
     </MudCardActions>
 </MudCard>
 
@@ -42,22 +35,13 @@
 
     private PizzaSelection Selection => PizzaSelections.FromPreset(Preset, _sizeId);
 
-    private PricedPizza? Priced => PizzaPricer.Price(Menu, Selection) is { IsSuccess: true } result ? result.Value : null;
-
-    private decimal Price => Priced?.UnitPrice ?? 0m;
-
-    private string Build => Priced is { } pizza ? $"{pizza.Crust} · {pizza.Sauce} · {PizzaText.Cheese(pizza.Cheese)}" : string.Empty;
-
-    private bool IsVegetarian =>
-        Menu.Toppings.Where(topping => Preset.ToppingIds.Contains(topping.Id)).All(topping => topping.Category == ToppingCategory.Veggie);
+    /// <summary>The price of this preset in the chosen size, shown before it is added.</summary>
+    private decimal Price => PizzaPricer.Price(Menu, Selection) is { IsSuccess: true } result ? result.Value.UnitPrice : 0m;
 
     protected override void OnInitialized()
     {
-        _sizeId = PizzaSelections.DefaultSizeId(Menu);
+        _sizeId = Menu.Sizes[0].Id;
     }
 
     private void OnSizeChanged(int sizeId) => _sizeId = sizeId;
-
-    private string SizeLabel(int sizeId) =>
-        Menu.Sizes.FirstOrDefault(size => size.Id == sizeId) is { } size ? $"{size.Name} ({size.Inches}\")" : string.Empty;
 }

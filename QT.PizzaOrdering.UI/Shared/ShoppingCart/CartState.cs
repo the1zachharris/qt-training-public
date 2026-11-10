@@ -19,7 +19,7 @@ public sealed class CartState(ICartStorage storage)
     public bool IsEmpty => _items.Count == 0;
     public bool IsFull => _items.Count >= OrderPricer.MaxPizzaLines;
     public int PizzaCount => _items.Sum(item => item.Pizza.Quantity);
-    public decimal Subtotal => _items.Sum(item => item.Pizza.LineTotal);
+    public decimal Total => _items.Sum(item => item.Pizza.LineTotal);
 
     /// <summary>
     /// Restores the saved cart once. Safe to await from any number of components.

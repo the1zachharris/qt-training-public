@@ -29,20 +29,16 @@ public sealed partial class PizzaOrderingHttpClient(ILogger<PizzaOrderingHttpCli
 
         public const string Menu = $"{Base}/menu";
         public const string Orders = $"{Base}/orders";
-        public const string QuoteOrder = $"{Base}/orders/quote";
     }
 
     public Task<ClientResult<MenuCatalog>> GetMenuAsync(CancellationToken ct = default) =>
         SendAsync<MenuCatalog>(nameof(GetMenuAsync), () => _http.GetAsync(Endpoints.Menu, ct), ct);
 
-    public Task<ClientResult<OrderQuote>> QuoteOrderAsync(QuoteOrderRequest request, CancellationToken ct = default) =>
-        SendAsync<OrderQuote>(nameof(QuoteOrderAsync), () => _http.PostAsJsonAsync(Endpoints.QuoteOrder, request, ct), ct);
+    public Task<ClientResult<OrderDetails>> PlaceOrderAsync(PlaceOrderRequest request, CancellationToken ct = default) =>
+        SendAsync<OrderDetails>(nameof(PlaceOrderAsync), () => _http.PostAsJsonAsync(Endpoints.Orders, request, ct), ct);
 
-    public Task<ClientResult<OrderConfirmation>> PlaceOrderAsync(PlaceOrderRequest request, CancellationToken ct = default) =>
-        SendAsync<OrderConfirmation>(nameof(PlaceOrderAsync), () => _http.PostAsJsonAsync(Endpoints.Orders, request, ct), ct);
-
-    public Task<ClientResult<OrderConfirmation>> GetOrderAsync(Guid orderId, CancellationToken ct = default) =>
-        SendAsync<OrderConfirmation>(nameof(GetOrderAsync), () => _http.GetAsync($"{Endpoints.Orders}/{orderId}", ct), ct);
+    public Task<ClientResult<OrderDetails>> GetOrderAsync(Guid orderId, CancellationToken ct = default) =>
+        SendAsync<OrderDetails>(nameof(GetOrderAsync), () => _http.GetAsync($"{Endpoints.Orders}/{orderId}", ct), ct);
 
     /// <summary>
     /// Sends one request and turns every outcome into a <see cref="ClientResult{T}"/>: the body on

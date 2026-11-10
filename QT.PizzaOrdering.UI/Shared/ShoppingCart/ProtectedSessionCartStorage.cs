@@ -12,13 +12,17 @@ public sealed partial class ProtectedSessionCartStorage(
     ILogger<ProtectedSessionCartStorage> logger,
     ProtectedSessionStorage sessionStorage) : ICartStorage
 {
-    private const string Key = "Cart";
+    /// <summary>
+    /// Versioned because the saved shape changed: a cart written by an earlier build under a
+    /// different key is simply never read, rather than being misread as pizzas with no size.
+    /// </summary>
+    public const string StorageKey = "Cart.v2";
 
     public async Task<IReadOnlyList<CartItem>?> LoadAsync()
     {
         try
         {
-            ProtectedBrowserStorageResult<List<CartItem>> result = await sessionStorage.GetAsync<List<CartItem>>(Key);
+            ProtectedBrowserStorageResult<List<CartItem>> result = await sessionStorage.GetAsync<List<CartItem>>(StorageKey);
             return result.Success ? result.Value : null;
         }
         catch (Exception ex) when (ex is CryptographicException or JsonException)
@@ -31,7 +35,7 @@ public sealed partial class ProtectedSessionCartStorage(
 
     public async Task SaveAsync(IReadOnlyList<CartItem> items)
     {
-        await sessionStorage.SetAsync(Key, items);
+        await sessionStorage.SetAsync(StorageKey, items);
     }
 
     [LoggerMessage(Level = LogLevel.Warning, Message = "The saved cart could not be read and was discarded.")]

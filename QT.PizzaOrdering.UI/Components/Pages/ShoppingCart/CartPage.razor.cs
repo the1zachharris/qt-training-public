@@ -42,7 +42,7 @@ public partial class CartPage : IDisposable
             Menu = menu.Data!;
         }
 
-        PizzaSelection? edited = await PizzaBuilderDialog.ShowAsync(DialogService, Menu, item.Selection, $"Change {item.Pizza.Name}", "Update Cart");
+        PizzaSelection? edited = await PizzaBuilderDialog.ShowAsync(DialogService, Menu, item.Selection, $"Change {item.Pizza.Name}", "Update Order");
         if (edited is null)
             return;
 

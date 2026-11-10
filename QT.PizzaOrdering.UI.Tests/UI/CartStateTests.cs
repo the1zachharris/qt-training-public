@@ -1,4 +1,3 @@
-using QT.PizzaOrdering.Core.Features.Menu.Enums;
 using QT.PizzaOrdering.Core.Features.Orders;
 using QT.PizzaOrdering.Core.Features.Orders.Requests;
 using QT.PizzaOrdering.Core.Features.Orders.Responses;
@@ -10,11 +9,11 @@ public class CartStateTests
 {
     private readonly FakeCartStorage _storage = new();
 
-    private static PizzaSelection Selection(int quantity = 1) =>
-        new(null, 2, 1, 1, CheeseLevel.Regular, [1], quantity);
+    // Large (14.00) + Pepperoni (2.00) = 16.00 each
+    private static PizzaSelection LargePepperoni(int quantity = 1) => new(null, 2, [1], quantity);
 
-    private static PricedPizza Priced(int quantity = 1, decimal unitPrice = 14.49m) =>
-        new("Build Your Own", "Medium (12\")", "Hand Tossed", "Classic Marinara", CheeseLevel.Regular, ["Pepperoni"], quantity, unitPrice, unitPrice * quantity);
+    private static PricedPizza Priced(int quantity = 1, decimal unitPrice = 16.00m) =>
+        new("Build Your Own", "Large (14\")", ["Pepperoni"], quantity, unitPrice, unitPrice * quantity);
 
     [Fact]
     public async Task AddAsync_AddsTheItemSavesItAndNotifies()
@@ -23,19 +22,30 @@ public class CartStateTests
         int notifications = 0;
         cart.Changed += () => notifications++;
 
-        await cart.AddAsync(Selection(2), Priced(2));
+        await cart.AddAsync(LargePepperoni(2), Priced(2));
 
         CartItem item = Assert.Single(cart.Items);
         Assert.Equal(2, cart.PizzaCount);
-        Assert.Equal(28.98m, cart.Subtotal);
+        Assert.Equal(32.00m, cart.Total);
         Assert.Equal(1, notifications);
         Assert.Equal([item], _storage.Saved);
     }
 
     [Fact]
+    public async Task Total_IsTheSumOfEveryPizza_WithNothingAdded()
+    {
+        CartState cart = new(_storage);
+
+        await cart.AddAsync(new PizzaSelection(null, 1, [], 1), new PricedPizza("Cheese Pizza", "Small (10\")", [], 1, 10.00m, 10.00m));
+        await cart.AddAsync(LargePepperoni(), Priced(unitPrice: 18.00m));
+
+        Assert.Equal(28.00m, cart.Total);
+    }
+
+    [Fact]
     public async Task EnsureLoadedAsync_RestoresTheSavedCartOnce()
     {
-        _storage.Saved = [new CartItem(Guid.NewGuid(), Selection(), Priced())];
+        _storage.Saved = [new CartItem(Guid.NewGuid(), LargePepperoni(), Priced())];
         CartState cart = new(_storage);
 
         await cart.EnsureLoadedAsync();
@@ -48,10 +58,10 @@ public class CartStateTests
     [Fact]
     public async Task AddAsync_WhenCartWasSaved_KeepsTheSavedItems()
     {
-        _storage.Saved = [new CartItem(Guid.NewGuid(), Selection(), Priced())];
+        _storage.Saved = [new CartItem(Guid.NewGuid(), LargePepperoni(), Priced())];
         CartState cart = new(_storage);
 
-        await cart.AddAsync(Selection(), Priced());
+        await cart.AddAsync(LargePepperoni(), Priced());
 
         Assert.Equal(2, cart.Items.Count);
     }
@@ -60,7 +70,7 @@ public class CartStateTests
     public async Task SetQuantityAsync_UpdatesSelectionAndLineTotal()
     {
         CartState cart = new(_storage);
-        await cart.AddAsync(Selection(), Priced());
+        await cart.AddAsync(LargePepperoni(), Priced());
         Guid itemId = cart.Items[0].Id;
 
         await cart.SetQuantityAsync(itemId, 3);
@@ -68,7 +78,8 @@ public class CartStateTests
         CartItem item = Assert.Single(cart.Items);
         Assert.Equal(3, item.Selection.Quantity);
         Assert.Equal(3, item.Pizza.Quantity);
-        Assert.Equal(43.47m, item.Pizza.LineTotal);
+        Assert.Equal(48.00m, item.Pizza.LineTotal);
+        Assert.Equal(48.00m, cart.Total);
     }
 
     [Theory]
@@ -77,7 +88,7 @@ public class CartStateTests
     public async Task SetQuantityAsync_ClampsToTheAllowedRange(int requested, int expected)
     {
         CartState cart = new(_storage);
-        await cart.AddAsync(Selection(), Priced());
+        await cart.AddAsync(LargePepperoni(), Priced());
 
         await cart.SetQuantityAsync(cart.Items[0].Id, requested);
 
@@ -88,11 +99,11 @@ public class CartStateTests
     public async Task ReplaceAsync_SwapsTheItemInPlace()
     {
         CartState cart = new(_storage);
-        await cart.AddAsync(Selection(), Priced());
-        await cart.AddAsync(Selection(), Priced());
+        await cart.AddAsync(LargePepperoni(), Priced());
+        await cart.AddAsync(LargePepperoni(), Priced());
         Guid firstId = cart.Items[0].Id;
 
-        await cart.ReplaceAsync(firstId, Selection(4), Priced(4, 20m));
+        await cart.ReplaceAsync(firstId, LargePepperoni(4), Priced(4, 20m));
 
         Assert.Equal(firstId, cart.Items[0].Id);
         Assert.Equal(80m, cart.Items[0].Pizza.LineTotal);
@@ -100,23 +111,24 @@ public class CartStateTests
     }
 
     [Fact]
-    public async Task RemoveAsync_RemovesOnlyThatItem()
+    public async Task RemoveAsync_RemovesOnlyThatItem_AndTheTotalDrops()
     {
         CartState cart = new(_storage);
-        await cart.AddAsync(Selection(), Priced());
-        await cart.AddAsync(Selection(), Priced());
+        await cart.AddAsync(LargePepperoni(), Priced());
+        await cart.AddAsync(LargePepperoni(2), Priced(2));
         Guid keptId = cart.Items[1].Id;
 
         await cart.RemoveAsync(cart.Items[0].Id);
 
         Assert.Equal(keptId, Assert.Single(cart.Items).Id);
+        Assert.Equal(32.00m, cart.Total);
     }
 
     [Fact]
     public async Task ClearAsync_EmptiesTheCartAndTheSavedCopy()
     {
         CartState cart = new(_storage);
-        await cart.AddAsync(Selection(), Priced());
+        await cart.AddAsync(LargePepperoni(), Priced());
 
         await cart.ClearAsync();
 
@@ -129,9 +141,17 @@ public class CartStateTests
     {
         CartState cart = new(_storage);
         for (int line = 0; line < OrderPricer.MaxPizzaLines; line++)
-            await cart.AddAsync(Selection(), Priced());
+            await cart.AddAsync(LargePepperoni(), Priced());
 
         Assert.True(cart.IsFull);
+    }
+
+    [Fact]
+    public void SavedCart_UsesAKeyThePassOneBuildNeverWrote()
+    {
+        // The first version of the app saved carts under "Cart" in a different shape. Reading
+        // one of those into the current shape would show pizzas with no size or toppings.
+        Assert.Equal("Cart.v2", ProtectedSessionCartStorage.StorageKey);
     }
 
     private sealed class FakeCartStorage : ICartStorage

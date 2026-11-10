@@ -1,6 +1,6 @@
 @page "/orders/{OrderId:guid}"
 
-<PageTitle>Order Confirmation - Pizza Ordering</PageTitle>
+<PageTitle>Order Confirmation - Neighborhood Pizza</PageTitle>
 
 <MudContainer MaxWidth="MaxWidth.Medium" Class="my-4">
     <MudPaper Class="page-shell">
@@ -15,19 +15,14 @@
                 <MudIcon Icon="@Icons.Material.Filled.CheckCircle" Color="Color.Success" Size="Size.Large" />
                 <MudStack Spacing="0">
                     <MudText Typo="Typo.h5" Style="font-weight: bold;">@($"Thanks, {Order.CustomerName}! Your order is in.")</MudText>
-                    <MudText Class="mud-text-secondary">@($"Order {Order.OrderNumber} · placed {Order.PlacedAt.ToLocalTime():MMM d, yyyy h:mm tt}")</MudText>
+                    <MudText Typo="Typo.h6">@($"Order {PizzaText.OrderNumber(Order.OrderNumber)}")</MudText>
                 </MudStack>
             </MudStack>
 
-            <MudAlert Severity="Severity.Info" Variant="Variant.Outlined" Class="mb-4">
-                @if (Order.Fulfillment == FulfillmentType.Delivery)
-                {
-                    @($"Delivery to {Order.DeliveryAddress}. Pay when your order arrives.")
-                }
-                else
-                {
-                    @("Pickup. Pay when you pick up your order.")
-                }
+            <MudAlert Severity="@(Order.Status == OrderStatus.Ready ? Severity.Success : Severity.Info)" Variant="Variant.Outlined" Class="mb-4">
+                @(Order.Status == OrderStatus.Ready
+                    ? "Your order is ready for pickup. Pay at the counter when you arrive."
+                    : "We are making your order now. Pay at the counter when you pick up.")
             </MudAlert>
 
             <MudStack Spacing="3">
@@ -38,17 +33,16 @@
                         <MudText Class="money">@pizza.LineTotal.ToCurrency()</MudText>
                     </MudStack>
                 }
-                @if (!string.IsNullOrEmpty(Order.Notes))
-                {
-                    <MudText Typo="Typo.body2" Class="mud-text-secondary">@($"Notes: {Order.Notes}")</MudText>
-                }
                 <MudDivider />
-                <OrderTotals Subtotal="@Order.Subtotal" Tax="@Order.Tax" DeliveryFee="@Order.DeliveryFee" Total="@Order.Total" />
+                <MudStack Row Justify="Justify.SpaceBetween">
+                    <MudText Typo="Typo.h6">Total</MudText>
+                    <MudText Typo="Typo.h6" Class="money">@Order.Total.ToCurrency()</MudText>
+                </MudStack>
             </MudStack>
 
             <MudStack Row Class="mt-6">
                 <MudSpacer />
-                <MudButton Variant="Variant.Filled" Color="Color.Primary" Href="/menu" StartIcon="@Icons.Material.Filled.LocalPizza">Order More</MudButton>
+                <MudButton Variant="Variant.Filled" Color="Color.Primary" Href="/menu" StartIcon="@Icons.Material.Filled.LocalPizza">Start Another Order</MudButton>
             </MudStack>
         }
         else
@@ -62,7 +56,7 @@
     [Parameter] public Guid OrderId { get; set; }
     [Inject] private IPizzaOrderingHttpClient Client { get; set; } = default!;
 
-    private OrderConfirmation? Order { get; set; }
+    private OrderDetails? Order { get; set; }
     private bool Loading { get; set; } = true;
     private StatusMessage? Status { get; set; }
 
@@ -71,7 +65,7 @@
         Loading = true;
         Status = null;
 
-        ClientResult<OrderConfirmation> result = await Client.GetOrderAsync(OrderId);
+        ClientResult<OrderDetails> result = await Client.GetOrderAsync(OrderId);
         Order = result.Data;
         if (result.IsFailure)
         {
