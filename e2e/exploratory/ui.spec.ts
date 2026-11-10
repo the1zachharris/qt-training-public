@@ -114,7 +114,8 @@ test.describe('Cart', () => {
     await openMenu(page);
     await addBuiltPizza(page, 'Small', []);
     await page.goto('/cart');
-    await page.getByRole('button', { name: 'Change this pizza' }).click();
+    // Each line's button is named for its pizza, e.g. "Change Build Your Own, Small (10")".
+    await page.getByRole('button', { name: /^Change / }).click();
     const dialog = page.getByRole('dialog');
     await chooseSize(dialog, 'Large');
     await toggleTopping(dialog, 'Mushrooms');
