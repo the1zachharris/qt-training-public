@@ -26,3 +26,13 @@ instead, run `npx playwright install chromium` and set `PW_CHANNEL=chromium`.
 |---|---|
 | `tests/ordering.spec.ts` | AC-1.1, 1.2, 1.3 (live pricing), AC-2.1, 2.2, 2.3 (cart), AC-3.1, 3.2 (checkout and confirmation) |
 | `tests/kitchen.spec.ts` | AC-3.3, 4.1 (order reaches the kitchen), AC-4.2 (Mark Ready), AC-4.3 (orders survive an API restart) |
+
+## Exploratory suite
+
+`exploratory/` holds a wider pass beyond the acceptance criteria (edge cases, API validation, phone
+width, accessibility, API outages). It is not part of `npm test`; failures there are findings, written
+up in [`docs/test-reports/2026-11-10-playwright-test-report.md`](../docs/test-reports/2026-11-10-playwright-test-report.md).
+
+```bash
+npx playwright test -c playwright.exploratory.config.ts
+```
