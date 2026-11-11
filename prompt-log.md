@@ -92,3 +92,10 @@ look up the latest WCAG guidelines and test for them against our app using playw
 (Message from session qt-tranning-public-04) FYI from qt-tranning-public-04: ZH-pass1 has moved from 55b8310 to f9b72d8 (fast-forward, pushed) with the WCAG 2.2 fixes. Pull before you make further changes. The report is docs/test-reports/2026-11-10-wcag-2.2-accessibility-report.md. Changes that touch files you edited: - MainLayout.razor: palette colors, skip link, <main> landmark, inert closed drawer. - QTHeader.razor: the logo is now a home link and the title is a <p>. - app.css: new accessibility section at the end. - Menu, cart, checkout, kitchen, and confirmation pages: accessible names, heading levels, and focus management. - StatusAlert now has role=alert or role=status. Test locators to know about: - Preset buttons are now named "Add Cheese" and "Customize Cheese". - Cart buttons are now named "Remove <pizza>, <size>" and so on. - builderPrice now uses .builder-price. I also fixed a race in exploratory "New column is oldest first": it now waits for the cards before reading them. Results: acceptance 12/12, exploratory 69/69, dotnet 35+68, WCAG suite 58/58.
 
 **Summary:** Pulled ZH-pass1. The working copy was already at f9b72d8, with no local changes. Noted the WCAG changes and the new test locators for future work. No code changed; only `prompt-log.md`.
+
+## 2026-11-11 08:39 · ZH-pass1
+
+**Prompt:**
+(No new user prompt. This turn handled the menu fix agent's final background notice after the WCAG audit.)
+
+**Summary:** Checked that the removed agent worktrees lost no commits. None were lost, and no code changed. Only `prompt-log.md` changed.
